@@ -64,3 +64,11 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Branch workflow
+
+For ongoing changes in this project, use the following flow:
+
+1. Create or work on the `stage` branch.
+2. Test and verify changes on `stage` first.
+3. Merge or push to `main` only after review or approval.
