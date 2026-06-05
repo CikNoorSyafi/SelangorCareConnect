@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\VolunteerSkill;
 
 class User extends Model
 {
@@ -14,4 +15,12 @@ class User extends Model
         'role'
 
     ];
+    public function volunteerSkills()
+    {
+        return $this->hasMany(
+            VolunteerSkill::class,
+            'volunteer_id'
+        );
+    }
+
 }

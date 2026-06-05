@@ -141,9 +141,6 @@
                     placeholder="Filter by name, skill, or status..."
                     class="border border-gray-200 rounded-lg px-4 py-3 w-96 focus:outline-none focus:ring-2 focus:ring-red-300">
 
-                <!-- DATE -->
-                <input type="date" name="date" value="{{ request('date') }}"
-                    class="border border-gray-200 rounded-lg px-4 py-3 bg-white">
 
                 <!-- FILTER BUTTON -->
                 <button type="submit" class="bg-red-500 text-white px-5 py-3 rounded-lg hover:bg-red-600 transition">
@@ -172,10 +169,7 @@
                     <th class="text-left px-8 py-4">Volunteer Name</th>
                     <th class="text-left px-6 py-4">Email</th>
                     <th class="text-left px-6 py-4">Skills</th>
-
-                    <!-- ✅ ADD THIS -->
                     <th class="text-left px-6 py-4">Registered Date</th>
-
                     <th class="text-left px-6 py-4">Status</th>
                     <th class="text-center px-6 py-4">Actions</th>
                 </tr>
@@ -186,136 +180,167 @@
 
                 @foreach($volunteers as $v)
 
-                    <tr class="hover:bg-gray-50 transition">
+                        <tr class="hover:bg-gray-50 transition">
 
-                        <!-- NAME -->
-                        <td class="px-8 py-5">
+                            <!-- NAME -->
+                            <td class="px-8 py-5">
 
-                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-4">
 
-                                <!-- AVATAR -->
-                                <div
-                                    class="w-14 h-14 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-xl font-bold">
-                                    {{ strtoupper(substr($v['name'], 0, 1)) }}
+                                    <!-- AVATAR -->
+                                    <div
+                                        class="w-14 h-14 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-xl font-bold">
+                                        {{ strtoupper(substr($v->name, 0, 1)) }}
+                                    </div>
+
+                                    <div>
+                                        <p class="font-semibold text-lg text-gray-800">
+                                            {{ $v->name }}
+                                        </p>
+
+                                        <p class="text-gray-400 text-sm">
+                                            ID: SCC-00{{ $v->id }}
+                                        </p>
+                                    </div>
+
                                 </div>
 
-                                <div>
-                                    <p class="font-semibold text-lg text-gray-800">
-                                        {{ $v['name'] }}
-                                    </p>
+                            </td>
 
-                                    <p class="text-gray-400 text-sm">
-                                        ID: SCC-00{{ $v['id'] }}
-                                    </p>
+                            <!-- EMAIL -->
+                            <td class="px-6 py-5 text-gray-700">
+                                {{ $v->email }}
+                            </td>
+
+                            <!-- SKILLS -->
+                            <td class="px-6 py-5">
+
+                                <div class="flex flex-wrap gap-2">
+
+                                    @forelse($v->volunteerSkills as $vs)
+
+                                        <span class="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">
+
+                                            {{ $vs->skill->name }}
+
+                                        </span>
+
+                                    @empty
+
+                                        <span class="text-gray-400">
+
+                                            Not Assigned
+
+                                        </span>
+
+                                    @endforelse
+
                                 </div>
 
-                            </div>
+                            </td>
 
-                        </td>
+                            <!-- REGISTERED DATE -->
+                            <td class="px-6 py-5 text-gray-600">
 
-                        <!-- EMAIL -->
-                        <td class="px-6 py-5 text-gray-700">
-                            {{ $v['email'] }}
-                        </td>
+                                {{ $v->created_at
+                    ? $v->created_at->format('d M Y')
+                    : '-' }}
 
-                        <!-- SKILLS -->
-                        <td class="px-6 py-5">
+                            </td>
 
-                            <div class="flex flex-wrap gap-2">
+                            <!-- STATUS -->
+                            <td class="px-6 py-5">
 
-                                @foreach($v['skills'] as $skill)
+                                @php
 
-                                    <span class="bg-red-50 text-red-500 px-3 py-1 rounded-full text-xs font-semibold">
-                                        {{ strtoupper($skill) }}
+                                    $assignmentCount =
+                                        \App\Models\CampaignVolunteer::where(
+                                            'volunteer_id',
+                                            $v->id
+                                        )->count();
+
+                                @endphp
+
+                                @if($assignmentCount > 0)
+
+                                    <span class="px-4 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
+
+                                        Assigned
+
                                     </span>
 
-                                @endforeach
+                                @else
 
-                            </div>
+                                    <span class="px-4 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-600">
 
-                        </td>
+                                        Available
 
-                        <!-- REGISTERED DATE -->
-                        <td class="px-6 py-5 text-gray-600">
-                            {{ $v['registered_date'] }}
-                        </td>
-                        <!-- STATUS -->
-                        <td class="px-6 py-5">
+                                    </span>
 
-                            @php
-                                $statusClass = match ($v['status']) {
-                                    'Active' => 'bg-green-100 text-green-700',
-                                    'Pending' => 'bg-yellow-100 text-yellow-700',
-                                    default => 'bg-gray-100 text-gray-600'
-                                };
-                            @endphp
+                                @endif
 
-                            <span class="px-4 py-1 rounded-full text-sm font-semibold {{ $statusClass }}">
-                                {{ $v['status'] }}
-                            </span>
+                            </td>
 
-                        </td>
 
-                        <!-- ACTIONS -->
-                        <td class="px-6 py-5">
+                            <!-- ACTIONS -->
+                            <td class="px-6 py-5">
 
-                            <div class="flex justify-center gap-5">
+                                <div class="flex justify-center gap-5">
 
-                                <!-- VIEW -->
-                                <a href="#" class="text-gray-400 hover:text-blue-500 transition">
+                                    <!-- VIEW -->
+                                    <a href="/volunteers/view/{{ $v->id }}" class="text-gray-400 hover:text-blue-500 transition">
 
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
 
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
 
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M2.458 12C3.732 7.943 7.523 5 12 5
-                                                                                                                                                                     c4.478 0 8.268 2.943 9.542 7
-                                                                                                                                                                     -1.274 4.057-5.064 7-9.542 7
-                                                                                                                                                                     -4.477 0-8.268-2.943-9.542-7z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5
+                                                                                                                                                                                                                                                                                                                                                     c4.478 0 8.268 2.943 9.542 7
+                                                                                                                                                                                                                                                                                                                                                     -1.274 4.057-5.064 7-9.542 7
+                                                                                                                                                                                                                                                                                                                                                     -4.477 0-8.268-2.943-9.542-7z" />
 
-                                    </svg>
+                                        </svg>
 
-                                </a>
+                                    </a>
 
-                                <!-- EDIT -->
-                                <a href="/volunteers/edit/{{ $v['id'] }}"
-                                    class="text-gray-400 hover:text-yellow-500 transition">
+                                    <!-- EDIT -->
+                                    <a href="/volunteers/edit/{{ $v->id }}" class="text-gray-400 hover:text-yellow-500 transition">
 
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
 
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.586-9.414
-                                                                                                                                         a2 2 0 112.828 2.828L11.828 17H9v-2.828
-                                                                                                                                         l8.414-8.586z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.586-9.414
+                                                                                                                                                                                                                                                                                                                         a2 2 0 112.828 2.828L11.828 17H9v-2.828
+                                                                                                                                                                                                                                                                                                                         l8.414-8.586z" />
 
-                                    </svg>
+                                        </svg>
 
-                                </a>
+                                    </a>
 
-                                <!-- DELETE -->
-                                <a href="/volunteers/delete/{{ $v['id'] }}" class="text-gray-400 hover:text-red-500 transition">
+                                    <!-- DELETE -->
+                                    <a href="/volunteers/delete/{{ $v->id }}" class="text-gray-400 hover:text-red-500 transition">
 
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
 
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
-                                                                                                                                                                     a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6
-                                                                                                                                                                     M1 7h22M9 3h6a1 1 0 011 1v2H8V4a1 1 0 011-1z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
+                                                                                                                                                                                                                                                                                                                                                     a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6
+                                                                                                                                                                                                                                                                                                                                                     M1 7h22M9 3h6a1 1 0 011 1v2H8V4a1 1 0 011-1z" />
 
-                                    </svg>
+                                        </svg>
 
-                                </a>
+                                    </a>
 
-                            </div>
+                                </div>
 
-                        </td>
+                            </td>
 
-                    </tr>
+                        </tr>
 
                 @endforeach
 
@@ -324,29 +349,44 @@
         </table>
 
         <!-- FOOTER -->
-        <div class="flex justify-between items-center px-8 py-5 border-t text-sm text-gray-500">
+        <div class="flex justify-between items-center px-8 py-5 border-t">
 
-            <p>
-                Showing 1 to {{ count($volunteers) }} of {{ count($volunteers) }} volunteers
+            <p class="text-gray-500 text-sm">
+
+                Showing
+
+                {{ $volunteers->firstItem() ?? 0 }}
+
+                -
+
+                {{ $volunteers->lastItem() ?? 0 }}
+
+                of
+
+                {{ $volunteers->total() }}
+
+                volunteers
+
             </p>
 
-            <div class="flex gap-2 items-center">
+            <div class="flex gap-2">
 
-                <button class="w-10 h-10 rounded bg-red-500 text-white font-semibold">
-                    1
-                </button>
+                @for ($i = 1; $i <= $volunteers->lastPage(); $i++)
 
-                <button class="w-10 h-10 rounded hover:bg-gray-100">
-                    2
-                </button>
+                        <a href="{{ $volunteers->url($i) }}" class="w-10 h-10 flex items-center justify-center rounded border
+                                                    {{ $volunteers->currentPage() == $i
+                    ? 'bg-red-500 text-white border-red-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100' }}">
 
-                <button class="w-10 h-10 rounded hover:bg-gray-100">
-                    3
-                </button>
+                            {{ $i }}
+
+                        </a>
+
+                @endfor
 
             </div>
 
-        </div>
+        </div>>
 
     </div>
 

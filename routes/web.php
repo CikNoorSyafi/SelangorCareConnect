@@ -99,13 +99,38 @@ Route::post(
 );
 
 Route::get('/volunteers', [VolunteerController::class, 'index']);
-Route::get('/volunteers/create', [VolunteerController::class, 'create']);
-Route::post('/volunteers/store', [VolunteerController::class, 'store']);
-Route::get('/volunteers/edit/{id}', [VolunteerController::class, 'edit']);
-Route::post('/volunteers/update/{id}', [VolunteerController::class, 'update']);
-Route::get('/volunteers/delete/{id}', [VolunteerController::class, 'delete']);
-Route::get('/donation', [DonationController::class, 'index']);
+Route::get(
+    '/volunteers/view/{id}',
+    [VolunteerController::class, 'view']
+);
+Route::post(
+    '/volunteers/skills/store',
+    [VolunteerController::class, 'storeSkill']
+);
+Route::post(
+    '/volunteers/skills/delete/{id}',
+    [VolunteerController::class, 'deleteSkill']
+);
+Route::get(
+    '/volunteers/edit/{id}',
+    [VolunteerController::class, 'edit']
+);
+Route::post(
+    '/volunteers/update/{id}',
+    [VolunteerController::class, 'update']
+);
 
+Route::post(
+    '/volunteers/assignment/store',
+    [VolunteerController::class, 'storeAssignment']
+);
+Route::get(
+    '/volunteers/assignment/delete/{id}',
+    [VolunteerController::class, 'deleteAssignment']
+);
+
+
+Route::get('/donation', [DonationController::class, 'index']);
 Route::get('/donation/create', [DonationController::class, 'create']);
 Route::post('/donation/store', [DonationController::class, 'store']);
 Route::get('/donation/edit/{id}', [DonationController::class, 'edit']);

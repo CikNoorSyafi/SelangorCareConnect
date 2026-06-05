@@ -2,188 +2,402 @@
 
 @section('content')
 
-<div class="max-w-5xl mx-auto">
+    <div class="bg-white p-6 rounded shadow">
+        @if(session('success'))
 
-    <!-- HEADER -->
-    <div class="flex justify-between items-center mb-6">
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
 
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">
-                Edit Volunteer
-            </h1>
+                {{ session('success') }}
 
-            <p class="text-gray-500 mt-1">
-                Update volunteer information and participation details.
-            </p>
-        </div>
+            </div>
 
-        <a href="/volunteers"
-           class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100">
-            Back
-        </a>
+        @endif
 
-    </div>
+        @if(session('error'))
 
-    <!-- FORM CARD -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
 
-        <form action="/volunteers/update/{{ $volunteer['id'] }}" method="POST">
+                {{ session('error') }}
+
+            </div>
+
+        @endif
+        <h1 class="text-2xl font-bold mb-6">
+            Edit Volunteer
+        </h1>
+
+        <form method="POST" action="/volunteers/update/{{ $volunteer->id }}">
+
             @csrf
 
-            <!-- PERSONAL INFO -->
-            <div class="mb-8">
+            <input type="hidden" name="volunteer_id" value="{{ $volunteer->id }}">
 
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">
-                    Personal Information
-                </h2>
+            <div class="grid grid-cols-2 gap-4 mb-8">
 
-                <div class="grid grid-cols-2 gap-5">
+                <div>
 
-                    <!-- NAME -->
-                    <div>
-                        <label class="text-sm text-gray-600 mb-1 block">
-                            Full Name
-                        </label>
+                    <label class="font-semibold">
+                        Name
+                    </label>
 
-                        <input type="text"
-                               name="name"
-                               value="{{ $volunteer['name'] }}"
-                               class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-400">
-                    </div>
+                    <p>{{ $volunteer->name }}</p>
 
-                    <!-- EMAIL -->
-                    <div>
-                        <label class="text-sm text-gray-600 mb-1 block">
-                            Email Address
-                        </label>
+                </div>
 
-                        <input type="email"
-                               name="email"
-                               value="{{ $volunteer['email'] }}"
-                               class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-400">
-                    </div>
+                <div>
 
-                    <!-- PHONE -->
-                    <div>
-                        <label class="text-sm text-gray-600 mb-1 block">
-                            Phone Number
-                        </label>
+                    <label class="font-semibold">
+                        Email
+                    </label>
 
-                        <input type="text"
-                               name="phone"
-                               value="{{ $volunteer['phone'] ?? '012-3456789' }}"
-                               class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-400">
-                    </div>
+                    <p>{{ $volunteer->email }}</p>
 
-                    <!-- AGE -->
-                    <div>
-                        <label class="text-sm text-gray-600 mb-1 block">
-                            Age
-                        </label>
+                </div>
 
-                        <input type="number"
-                               name="age"
-                               value="{{ $volunteer['age'] ?? '25' }}"
-                               class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-400">
-                    </div>
+                <div>
+
+                    <label class="font-semibold">
+                        Role
+                    </label>
+
+                    <p>{{ $volunteer->role }}</p>
+
+                </div>
+
+                <div>
+
+                    <label class="font-semibold">
+                        Joined Date
+                    </label>
+
+                    <p>
+
+                        {{ $volunteer->created_at
+        ? $volunteer->created_at->format('d M Y')
+        : '-' }}
+
+                    </p>
 
                 </div>
 
             </div>
 
-            <!-- SKILLS -->
+            {{-- SKILLS --}}
+
             <div class="mb-8">
 
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">
-                    Volunteer Skills
-                </h2>
+                <label class="font-semibold block mb-3">
 
-                <div class="grid grid-cols-3 gap-4">
+                    Skills
 
-                    @php
-                        $skills = $volunteer['skills'] ?? [];
-                    @endphp
+                </label>
 
-                    @foreach(['First Aid','Education','Logistics','Finance','Mentoring','Language'] as $skill)
+                <div class="flex flex-wrap gap-2 mb-4">
 
-                    <label class="flex items-center gap-2 bg-gray-50 border rounded-lg p-3">
+                    @forelse($volunteer->volunteerSkills as $vs)
 
-                        <input type="checkbox"
-                               name="skills[]"
-                               value="{{ $skill }}"
-                               {{ in_array($skill, $skills) ? 'checked' : '' }}>
+                        <div class="flex items-center gap-2 bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm">
 
-                        {{ $skill }}
+                            <span>
 
-                    </label>
+                                {{ $vs->skill->name }}
+
+                            </span>
+
+                            <a href="/volunteers/skills/delete/{{ $vs->id }}" onclick="return confirm('Remove this skill?')"
+                                class="font-bold">
+
+                                ✕
+
+                            </a>
+
+                        </div>
+
+                    @empty
+
+                        <span class="text-gray-400">
+
+                            No skills assigned
+
+                        </span>
+
+                    @endforelse
+
+                </div>
+
+                <div class="flex gap-2">
+
+                    <select name="new_skill_id" class="border p-2 rounded">
+
+                        <option value="">
+                            -- Select Skill --
+                        </option>
+
+                        @foreach($skills as $skill)
+
+                            <option value="{{ $skill->id }}">
+
+                                {{ $skill->name }}
+
+                            </option>
+
+                        @endforeach
+
+                    </select>
+
+                </div>
+
+            </div>
+
+            {{-- CAMPAIGN ASSIGNMENTS --}}
+
+            <h2 class="text-xl font-bold mb-4">
+
+                Campaign Assignments
+
+            </h2>
+
+            <table class="w-full border">
+
+                <thead class="bg-gray-100">
+
+                    <tr>
+
+                        <th class="p-3 text-left">
+                            Campaign
+                        </th>
+
+                        <th class="p-3 text-left">
+                            Role
+                        </th>
+
+                        <th class="p-3 text-left">
+                            Shift
+                        </th>
+
+                        <th class="p-3 text-left">
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @forelse($assignments as $assignment)
+
+                        <tr class="border-t">
+
+                            <td class="p-3">
+
+                                {{ $assignment->campaign->name }}
+
+                            </td>
+
+                            <td class="p-3">
+
+                                <select name="role_id[{{ $assignment->id }}]" class="border p-2 rounded w-full">
+
+                                    @foreach($roles as $role)
+
+                                        <option value="{{ $role->id }}" {{ $assignment->role_id == $role->id ? 'selected' : '' }}>
+
+                                            {{ $role->name }}
+
+                                        </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </td>
+
+                            <td class="p-3">
+
+                                <select name="shift_id[{{ $assignment->id }}]" class="border p-2 rounded w-full">
+
+                                    @foreach($shifts as $shift)
+
+                                        <option value="{{ $shift->id }}" {{ $assignment->shift_id == $shift->id ? 'selected' : '' }}>
+
+                                            {{ $shift->name }}
+
+                                        </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </td>
+                            <td class="p-3">
+
+                                <a href="/volunteers/assignment/delete/{{ $assignment->id }}"
+                                    onclick="return confirm('Remove this campaign assignment?')"
+                                    class="bg-red-500 text-white px-3 py-2 rounded">
+
+                                    Remove
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    @empty
+
+                        <tr>
+
+                            <td class="p-3">
+
+                                <select name="campaign_id" class="border p-2 rounded w-full">
+
+                                    <option value="">
+
+                                        Select Campaign
+
+                                    </option>
+
+                                    @foreach($campaigns as $campaign)
+
+                                        <option value="{{ $campaign->id }}">
+
+                                            {{ $campaign->name }}
+
+                                        </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </td>
+
+                            <td class="p-3">
+
+                                <select name="new_role_id" class="border p-2 rounded w-full">
+
+                                    @foreach($roles as $role)
+
+                                        <option value="{{ $role->id }}">
+
+                                            {{ $role->name }}
+
+                                        </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </td>
+
+                            <td class="p-3">
+
+                                <select name="new_shift_id" class="border p-2 rounded w-full">
+
+                                    @foreach($shifts as $shift)
+
+                                        <option value="{{ $shift->id }}">
+
+                                            {{ $shift->name }}
+
+                                        </option>
+
+                                    @endforeach
+
+                                </select>
+
+                            </td>
+
+                        </tr>
+
+                    @endforelse
+
+                </tbody>
+
+            </table>
+
+            <h3 class="text-lg font-semibold mt-6 mb-3">
+
+                Add New Campaign Assignment
+
+            </h3>
+
+            <div class="grid grid-cols-3 gap-4 mb-4">
+
+                <select name="new_campaign_id" class="border p-2 rounded">
+
+                    <option value="">
+                        Select Campaign
+                    </option>
+
+                    @foreach($campaigns as $campaign)
+
+                        <option value="{{ $campaign->id }}">
+
+                            {{ $campaign->name }}
+
+                        </option>
 
                     @endforeach
 
-                </div>
+                </select>
 
-            </div>
+                <select name="new_role_id" class="border p-2 rounded">
 
-            <!-- STATUS -->
-            <div class="mb-8">
-
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">
-                    Volunteer Status
-                </h2>
-
-                <select name="status"
-                        class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-400">
-
-                    <option value="Active"
-                        {{ ($volunteer['status'] ?? '') == 'Active' ? 'selected' : '' }}>
-                        Active
+                    <option value="">
+                        Select Role
                     </option>
 
-                    <option value="Pending"
-                        {{ ($volunteer['status'] ?? '') == 'Pending' ? 'selected' : '' }}>
-                        Pending
+                    @foreach($roles as $role)
+
+                        <option value="{{ $role->id }}">
+
+                            {{ $role->name }}
+
+                        </option>
+
+                    @endforeach
+
+                </select>
+
+                <select name="new_shift_id" class="border p-2 rounded">
+
+                    <option value="">
+                        Select Shift
                     </option>
 
-                    <option value="Inactive"
-                        {{ ($volunteer['status'] ?? '') == 'Inactive' ? 'selected' : '' }}>
-                        Inactive
-                    </option>
+                    @foreach($shifts as $shift)
+
+                        <option value="{{ $shift->id }}">
+
+                            {{ $shift->name }}
+
+                        </option>
+
+                    @endforeach
 
                 </select>
 
             </div>
 
-            <!-- NOTES -->
-            <div class="mb-8">
+            <div class="mt-6 flex gap-3">
 
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">
-                    Additional Notes
-                </h2>
+                <button type="submit" class="bg-red-500 text-white px-6 py-2 rounded">
 
-                <textarea name="notes"
-                          rows="4"
-                          class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-400">{{ $volunteer['notes'] ?? '' }}</textarea>
+                    Save Changes
 
-            </div>
-
-            <!-- ACTION BUTTONS -->
-            <div class="flex justify-end gap-3">
-
-                <a href="/volunteers"
-                   class="px-5 py-3 rounded-lg border border-gray-300 hover:bg-gray-100">
-                    Cancel
-                </a>
-
-                <button type="submit"
-                        class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg shadow">
-                    Update Volunteer
                 </button>
+
+                <a href="/volunteers" class="border px-6 py-2 rounded">
+
+                    Cancel
+
+                </a>
 
             </div>
 
         </form>
 
     </div>
-
-</div>
 
 @endsection
