@@ -3,46 +3,171 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Campaign;
+use App\Models\User;
+use App\Models\Skill;
+use App\Models\VolunteerRole;
+use App\Models\Shift;
+use App\Models\CampaignVolunteer;
+
 
 class CampaignController extends Controller
 {
     public function index()
     {
-        // Volunteer dummy data
-        $volunteers = [
-            [
-                'name' => 'Nurul Hidayah',
-                'id' => 'V-1092'
-            ],
-            [
-                'name' => 'Jason Khoo',
-                'id' => 'V-2201'
-            ],
-            [
-                'name' => 'Aminah Aziz',
-                'id' => 'V-3321'
-            ]
-        ];
+        $volunteers = User::where(
+            'role',
+            'volunteer'
+        )->get();
 
-        // Campaign dummy storage
-        $campaigns = session('campaigns', []);
+        $skills = Skill::where(
+            'status',
+            'Active'
+        )->get();
+
+        $roles = VolunteerRole::where(
+            'status',
+            'Active'
+        )->get();
+
+        $shifts = Shift::where(
+            'status',
+            'Active'
+        )->get();
+
+
+        $search = request('search');
+
+        $campaigns = Campaign::withCount('volunteers')
+            ->when(
+                $search,
+                function ($query) use ($search) {
+
+                    $query->where(
+                        'name',
+                        'like',
+                        "%{$search}%"
+                    )
+                        ->orWhere(
+                            'location',
+                            'like',
+                            "%{$search}%"
+                        )
+                        ->orWhere(
+                            'status',
+                            'like',
+                            "%{$search}%"
+                        );
+                }
+            )
+            ->latest()
+            ->paginate(5)
+            ->withQueryString();
+
+        $totalCampaigns =
+            Campaign::count();
+
+        $activeCampaigns =
+            Campaign::where(
+                'status',
+                'Approved'
+            )->count();
+
+        $pendingCampaigns =
+            Campaign::where(
+                'status',
+                'Pending'
+            )->count();
+
+        $completedCampaigns =
+            Campaign::where(
+                'status',
+                'Closed'
+            )->count();
+
+        $locations = [
+
+            // Petaling
+            'Petaling Jaya',
+            'Subang Jaya',
+            'Puchong',
+            'Damansara',
+            'Kelana Jaya',
+            'Seri Kembangan',
+            'Seri Petaling',
+
+            // Klang
+            'Klang',
+            'Port Klang',
+            'Bukit Tinggi',
+
+            // Gombak
+            'Gombak',
+            'Selayang',
+            'Batu Caves',
+            'Rawang',
+
+            // Hulu Langat
+            'Kajang',
+            'Cheras',
+            'Semenyih',
+            'Bandar Baru Bangi',
+            'Balakong',
+            'Ampang',
+
+            // Kuala Langat
+            'Banting',
+            'Jenjarom',
+            'Telok Panglima Garang',
+
+            // Kuala Selangor
+            'Kuala Selangor',
+            'Bestari Jaya',
+            'Jeram',
+            'Ijok',
+
+            // Hulu Selangor
+            'Kuala Kubu Bharu',
+            'Batang Kali',
+            'Hulu Yam',
+            'Kerling',
+
+            // Sepang
+            'Sepang',
+            'Cyberjaya',
+            'Putra Perdana',
+            'Salak Tinggi',
+
+            // Sabak Bernam
+            'Sabak Bernam',
+            'Sungai Besar',
+            'Sekinchan',
+
+            // Shah Alam
+            'Shah Alam'
+
+        ];
 
         return view(
             'organizer.campaign',
             compact(
                 'volunteers',
-                'campaigns'
+                'skills',
+                'roles',
+                'shifts',
+                'campaigns',
+                'totalCampaigns',
+                'activeCampaigns',
+                'pendingCampaigns',
+                'completedCampaigns',
+                'locations'
             )
         );
     }
 
     public function store(Request $request)
     {
-        $campaigns = session('campaigns', []);
-
-        $campaigns[] = [
-
-            'id' => time(),
+        $campaign = Campaign::create([
 
             'name' => $request->campaign_name,
 
@@ -60,15 +185,27 @@ class CampaignController extends Controller
 
             'description' => $request->description,
 
-            'status' => 'Approved',
-            'volunteers' => $request->volunteers ?? [],
+            'status' => 'Pending'
 
-            'donors' => [],
-        ];
-
-        session([
-            'campaigns' => $campaigns
         ]);
+
+        if ($request->has('volunteers')) {
+
+            foreach ($request->volunteers as $volunteerId) {
+
+                CampaignVolunteer::create([
+
+                    'campaign_id' => $campaign->id,
+
+                    'volunteer_id' => $volunteerId,
+
+                    'role_id' => $request->role_id[$volunteerId],
+
+                    'shift_id' => $request->shift_id[$volunteerId]
+
+                ]);
+            }
+        }
 
         return redirect('/campaign')
             ->with(
@@ -79,17 +216,8 @@ class CampaignController extends Controller
 
     public function delete($id)
     {
-        $campaigns = session('campaigns', []);
-
-        foreach ($campaigns as $key => $campaign) {
-            if ($campaign['id'] == $id) {
-                unset($campaigns[$key]);
-            }
-        }
-
-        session([
-            'campaigns' => array_values($campaigns)
-        ]);
+        Campaign::findOrFail($id)
+            ->delete();
 
         return redirect('/campaign')
             ->with(
@@ -100,72 +228,151 @@ class CampaignController extends Controller
 
     public function edit($id)
     {
-        $campaigns = session('campaigns', []);
-
-        $campaign = null;
-
-        foreach ($campaigns as $c) {
-            if ($c['id'] == $id) {
-                $campaign = $c;
-                break;
-            }
-        }
+        $campaign =
+            Campaign::findOrFail($id);
 
         if (!$campaign) {
             return redirect('/campaign');
         }
 
-        $volunteers = [
-            [
-                'name' => 'Nurul Hidayah',
-                'id' => 'V-1092'
-            ],
-            [
-                'name' => 'Jason Khoo',
-                'id' => 'V-2201'
-            ],
-            [
-                'name' => 'Aminah Aziz',
-                'id' => 'V-3321'
-            ]
+        $volunteers = User::where(
+            'role',
+            'volunteer'
+        )->get();
+
+        $assignedVolunteerIds =
+            CampaignVolunteer::where(
+                'campaign_id',
+                $campaign->id
+            )
+                ->pluck('volunteer_id')
+                ->toArray();
+        $assignedAssignments =
+            CampaignVolunteer::where(
+                'campaign_id',
+                $campaign->id
+            )
+                ->get()
+                ->keyBy('volunteer_id');
+        $roles = VolunteerRole::where(
+            'status',
+            'Active'
+        )->get();
+
+        $shifts = Shift::where(
+            'status',
+            'Active'
+        )->get();
+
+        $locations = [
+
+            'Petaling Jaya',
+            'Subang Jaya',
+            'Puchong',
+            'Damansara',
+            'Kelana Jaya',
+            'Seri Kembangan',
+            'Seri Petaling',
+
+            'Klang',
+            'Port Klang',
+            'Bukit Tinggi',
+
+            'Gombak',
+            'Selayang',
+            'Batu Caves',
+            'Rawang',
+
+            'Kajang',
+            'Cheras',
+            'Semenyih',
+            'Bandar Baru Bangi',
+            'Balakong',
+            'Ampang',
+
+            'Banting',
+            'Jenjarom',
+            'Telok Panglima Garang',
+
+            'Kuala Selangor',
+            'Bestari Jaya',
+            'Jeram',
+            'Ijok',
+
+            'Kuala Kubu Bharu',
+            'Batang Kali',
+            'Hulu Yam',
+            'Kerling',
+
+            'Sepang',
+            'Cyberjaya',
+            'Putra Perdana',
+            'Salak Tinggi',
+
+            'Sabak Bernam',
+            'Sungai Besar',
+            'Sekinchan',
+
+            'Shah Alam'
+
         ];
 
         return view(
             'organizer.edit-campaign',
             compact(
                 'campaign',
-                'volunteers'
+                'volunteers',
+                'assignedVolunteerIds',
+                'roles',
+                'shifts',
+                'assignedAssignments',
+                'locations'
             )
         );
     }
 
     public function update(Request $request, $id)
     {
-        $campaigns = session('campaigns', []);
+        $campaign =
+            Campaign::findOrFail($id);
 
-        foreach ($campaigns as &$campaign) {
-            if ($campaign['id'] == $id) {
-                $campaign['name'] = $request->campaign_name;
+        $campaign->update([
 
-                $campaign['location'] = $request->location;
+            'name' => $request->campaign_name,
 
-                $campaign['target'] = (float) 
-                    str_replace(
-                        ',',
-                        '',
-                        $request->funding_target
-                    );
+            'location' => $request->location,
 
-                $campaign['description'] =
-                    $request->description;
-                $campaign['volunteers']
-                    = $request->volunteers ?? [];
+            'target' => floatval(
+                str_replace(
+                    ',',
+                    '',
+                    $request->funding_target
+                )
+            ),
+
+            'description' =>
+                $request->description
+
+        ]);
+        CampaignVolunteer::where(
+            'campaign_id',
+            $campaign->id
+        )->delete();
+
+        if ($request->has('volunteers')) {
+
+            foreach ($request->volunteers as $volunteerId) {
+
+                CampaignVolunteer::create([
+
+                    'campaign_id' => $campaign->id,
+                    'volunteer_id' => $volunteerId,
+                    'role_id' => $request->role_id[$volunteerId],
+                    'shift_id' => $request->shift_id[$volunteerId]
+
+                ]);
             }
         }
-
-        session([
-            'campaigns' => $campaigns
-        ]);
 
         return redirect('/campaign')
             ->with(

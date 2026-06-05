@@ -4,14 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class User extends Model
+class VolunteerRole extends Model
 {
+    //
     protected $fillable = [
 
         'name',
-        'email',
-        'password',
-        'role'
+        'description',
+        'status'
 
     ];
 }

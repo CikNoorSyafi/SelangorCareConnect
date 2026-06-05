@@ -24,42 +24,31 @@
 
         <div class="bg-white p-4 rounded shadow">
             <p class="text-sm text-gray-500">Total Campaigns</p>
-            <h2 class="text-xl font-bold">24</h2>
+            <h2 class="text-xl font-bold">{{ $totalCampaigns }}</h2>
         </div>
 
         <div class="bg-white p-4 rounded shadow">
             <p class="text-sm text-gray-500">Active Now</p>
-            <h2 class="text-xl font-bold">8</h2>
+            <h2 class="text-xl font-bold">{{ $activeCampaigns }}</h2>
         </div>
 
         <div class="bg-white p-4 rounded shadow">
             <p class="text-sm text-gray-500">Pending</p>
-            <h2 class="text-xl font-bold">2</h2>
+            <h2 class="text-xl font-bold">{{ $pendingCampaigns }}</h2>
         </div>
 
         <div class="bg-white p-4 rounded shadow">
             <p class="text-sm text-gray-500">Completed</p>
-            <h2 class="text-xl font-bold">14</h2>
-        </div>
-
-    </div>
-
-    <!-- FILTER -->
-    <div class="flex justify-between items-center mb-4">
-
-        <h2 class="text-lg font-semibold">Existing Campaigns</h2>
-
-        <div class="flex gap-2">
-            <input type="text" placeholder="Search campaigns..." class="border px-3 py-2 rounded text-sm">
-
-            <button class="border px-3 py-2 rounded text-sm">Filter</button>
-            <button class="border px-3 py-2 rounded text-sm">Export</button>
+            <h2 class="text-xl font-bold">{{ $completedCampaigns }}</h2>
         </div>
 
     </div>
 
 
-    <!-- FORM -->
+
+
+    <!-- FORM Create New Campaign-->
+
     <form method="POST" action="/campaign/store">
 
         @csrf
@@ -136,8 +125,17 @@
                         Location
                     </label>
 
-                    <input name="location" type="text" placeholder="Enter campaign location"
+                    <input type="text" name="location" list="selangor-locations" placeholder="Type location..."
                         class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm">
+                    <datalist id="selangor-locations">
+
+                        @foreach($locations as $location)
+
+                            <option value="{{ $location }}">
+
+                        @endforeach
+
+                    </datalist>
 
                 </div>
 
@@ -181,194 +179,312 @@
                 </div>
 
             </div>
-        </div>
 
-        <!-- ROLES -->
-        <div class="mt-4">
-            <p class="text-sm font-semibold mb-2">Volunteer Roles Needed</p>
 
-            <div class="flex gap-2 flex-wrap">
-                <span class="bg-red-100 text-red-500 px-3 py-1 rounded-full text-xs">
-                    General Helper ✕
-                </span>
-                <span class="bg-red-100 text-red-500 px-3 py-1 rounded-full text-xs">
-                    First Aid ✕
-                </span>
-                <button class="bg-gray-100 px-3 py-1 rounded-full text-xs">
-                    + Add Role
+            <!-- ROLES -->
+            <div class="mt-4">
+
+                <label class="block text-sm font-semibold mb-2">
+                    Required Skills
+                </label>
+
+                <select name="required_skills[]" multiple class="w-full border rounded p-2">
+
+                    @foreach($skills as $skill)
+
+                        <option value="{{ $skill->id }}">
+                            {{ $skill->name }}
+                        </option>
+
+                    @endforeach
+
+                </select>
+
+                <p class="text-xs text-gray-500 mt-1">
+                    Hold CTRL to select multiple skills.
+                </p>
+
+            </div>
+
+            <!-- ASSIGN VOLUNTEERS -->
+            <div class="mt-6 border p-4 rounded">
+
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-semibold">Assign Volunteers</h3>
+                    <span class="text-xs text-gray-400">Optional</span>
+                </div>
+
+                <div class="flex gap-2 mb-3">
+                    <input type="text" placeholder="Search volunteers..." class="border p-2 rounded w-full text-sm">
+
+                    <button class="border px-3 rounded text-sm">Search</button>
+                </div>
+
+                <table class="w-full text-sm border">
+
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="p-2 text-left">Volunteer</th>
+                            <th class="p-2 text-left">Role</th>
+                            <th class="p-2 text-left">Shift</th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach($volunteers as $v)
+
+                            <tr>
+
+                                <td class="p-2">
+
+                                    <label class="flex items-start gap-2">
+
+                                        <input type="checkbox" name="volunteers[]" value="{{ $v->id }}" class="mt-1">
+
+                                        <div>
+
+                                            {{ $v->name }}
+
+                                            <br>
+
+                                            <span class="text-xs text-gray-400">
+                                                ID: {{ $v->id }}
+                                            </span>
+
+                                        </div>
+
+                                    </label>
+
+                                </td>
+
+                                <td class="p-2">
+
+                                    <select name="role_id[{{ $v->id }}]" class="border p-1 rounded">
+
+                                        @foreach($roles as $role)
+
+                                            <option value="{{ $role->id }}">
+                                                {{ $role->name }}
+                                            </option>
+
+                                        @endforeach
+
+                                    </select>
+
+                                </td>
+
+                                <td class="p-2">
+
+                                    <select name="shift_id[{{ $v->id }}]" class="border p-1 rounded">
+
+                                        @foreach($shifts as $shift)
+
+                                            <option value="{{ $shift->id }}">
+                                                {{ $shift->name }}
+                                            </option>
+
+                                        @endforeach
+
+                                    </select>
+
+                                </td>
+
+                            </tr>
+
+                        @endforeach
+
+                    </tbody>
+
+                </table>
+
+
+            </div>
+
+            <textarea name="description" class="border p-3 rounded w-full mt-4" placeholder="Description"></textarea>
+
+            <div class="flex justify-end mt-4 gap-2">
+                <button class="px-4 py-2 border rounded">Cancel</button>
+                <button type="submit" class="bg-red-500 text-white px-6 py-2 rounded">
+                    Save Campaign
                 </button>
             </div>
         </div>
 
-        <!-- ASSIGN VOLUNTEERS -->
-        <div class="mt-6 border p-4 rounded">
-
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-semibold">Assign Volunteers</h3>
-                <span class="text-xs text-gray-400">Optional</span>
-            </div>
-
-            <div class="flex gap-2 mb-3">
-                <input type="text" placeholder="Search volunteers..." class="border p-2 rounded w-full text-sm">
-
-                <button class="border px-3 rounded text-sm">Search</button>
-            </div>
-
-            <table class="w-full text-sm border">
-
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="p-2 text-left">Volunteer</th>
-                        <th class="p-2 text-left">Role</th>
-                        <th class="p-2 text-left">Shift</th>
-                        <th class="p-2 text-center">Remove</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    @foreach($volunteers as $v)
-                        <tr>
-
-                            <td class="p-2">
-
-                                <label class="flex items-start gap-2">
-
-                                    <input type="checkbox" name="volunteers[]" value="{{ $v['id'] }}" class="mt-1">
-
-                                    <div>
-                                        {{ $v['name'] }} <br>
-
-                                        <span class="text-xs text-gray-400">
-                                            ID: {{ $v['id'] }}
-                                        </span>
-                                    </div>
-
-                                </label>
-
-                            </td>
-
-                            <td class="p-2">
-                                <select class="border p-1 rounded">
-                                    <option>General Helper</option>
-                                    <option>First Aid</option>
-                                </select>
-                            </td>
-
-                            <td class="p-2">
-                                <select class="border p-1 rounded">
-                                    <option>Full Event</option>
-                                    <option>Morning Shift</option>
-                                </select>
-                            </td>
-
-                            <td class="p-2 text-center">✕</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <textarea name="description" class="border p-3 rounded w-full mt-4" placeholder="Description"></textarea>
-
-        <div class="flex justify-end mt-4 gap-2">
-            <button class="px-4 py-2 border rounded">Cancel</button>
-            <button type="submit" class="bg-red-500 text-white px-6 py-2 rounded">
-                Save Campaign
-            </button>
-        </div>
-
     </form>
 
-    @if(isset($campaigns) && count($campaigns) > 0)
+    <!-- EXISTING CAMPAIGNS -->
 
-        <div class="bg-white rounded-xl p-6 mt-8">
+    <div class="mt-10">
 
-            <h2 class="text-xl font-bold mb-4">
-                Existing Campaigns
-            </h2>
+        @if($campaigns->count())
 
-            <table class="w-full">
+            <div class="bg-white p-6 rounded shadow">
 
-                <thead>
+                <div class="flex justify-between items-center mb-6">
 
-                    <tr class="border-b">
+                    <h2 class="text-2xl font-bold">
+                        Existing Campaigns
+                    </h2>
 
-                        <th class="text-left py-2">
-                            Campaign
-                        </th>
+                    <div class="relative w-80">
 
-                        <th class="text-left py-2">
-                            Target
-                        </th>
+                        <form method="GET" action="{{ url('/campaign') }}">
 
-                        <th class="text-left py-2">
-                            Volunteers
-                        </th>
+                            <div class="relative">
 
-                        <th class="text-left py-2">
-                            Status
-                        </th>
+                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search..."
+                                    class="w-full border border-gray-300 rounded-md pl-4 pr-12 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400">
 
-                        <th class="text-left py-2">
-                            Action
-                        </th>
+                                <button type="submit"
+                                    class="absolute inset-y-0 right-0 flex items-center px-4 bg-gray-100 border-l border-gray-300 rounded-r-md">
 
-                    </tr>
+                                    <span class="material-symbols-outlined text-gray-700">
+                                        search
+                                    </span>
 
-                </thead>
+                                </button>
 
-                <tbody>
+                            </div>
 
-                    @foreach($campaigns as $campaign)
+                        </form>
+
+                        <div
+                            class="absolute inset-y-0 right-0 flex items-center px-4 bg-gray-100 border-l border-gray-300 rounded-r-md">
+
+                            <span class="material-symbols-outlined text-gray-700">
+                                search
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <table class="w-full">
+
+                    <thead>
 
                         <tr class="border-b">
 
-                            <td class="py-3">
-                                {{ $campaign['name'] }}
-                            </td>
+                            <th class="text-left py-3">
+                                Campaign
+                            </th>
 
-                            <td>
-                                RM {{ number_format((float) str_replace(',', '', $campaign['target']), 2) }}
-                            </td>
+                            <th class="text-left py-3">
+                                Target
+                            </th>
 
-                            <td>
-                                {{ count($campaign['volunteers'] ?? []) }}
-                            </td>
+                            <th class="text-left py-3">
+                                Volunteers
+                            </th>
 
-                            <td>
-                                {{ $campaign['status'] }}
-                            </td>
-                            <td class="space-x-2">
+                            <th class="text-left py-3">
+                                Status
+                            </th>
 
-                                <a href="/campaign/edit/{{ $campaign['id'] }}"
-                                    class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
-                                    Edit
-                                </a>
-
-                                <form action="/campaign/delete/{{ $campaign['id'] }}" method="POST" style="display:inline;">
-                                    @csrf
-
-                                    <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded text-sm">
-                                        Delete
-                                    </button>
-
-                                </form>
-
-                            </td>
+                            <th class="text-left py-3">
+                                Action
+                            </th>
 
                         </tr>
 
-                    @endforeach
+                    </thead>
 
-                </tbody>
+                    <tbody>
 
-            </table>
+                        @foreach($campaigns as $campaign)
 
-        </div>
+                            <tr class="{{ !$loop->last ? 'border-b' : '' }} campaign-row">
 
-    @endif
+                                <td class="py-3">
+                                    {{ $campaign->name }}
+                                </td>
+
+                                <td>
+                                    RM {{ number_format((float) $campaign->target, 2) }}
+                                </td>
+
+                                <td>
+                                    {{ $campaign->volunteers_count }}
+                                </td>
+
+                                <td>
+                                    {{ $campaign->status }}
+                                </td>
+
+                                <td class="space-x-2">
+
+                                    <a href="/campaign/edit/{{ $campaign->id }}"
+                                        class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                                        Edit
+                                    </a>
+
+                                    <form action="/campaign/delete/{{ $campaign->id }}" method="POST" class="inline"
+                                        onsubmit="return confirm('Campaign: {{ $campaign->name }} will be permanently deleted.\n\nAre you sure you want to proceed?')">
+
+                                        @csrf
+
+                                        <button type="submit"
+                                            class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
+
+                                            Delete
+
+                                        </button>
+
+                                    </form>
+
+                                </td>
+
+                            </tr>
+
+                        @endforeach
+
+                    </tbody>
+
+                </table>
+
+                <!-- PAGINATION -->
+
+                <div class="flex justify-between items-center mt-6 border-t pt-4">
+
+                    <div class="text-sm text-gray-500">
+
+                        Showing
+                        {{ $campaigns->firstItem() ?? 0 }}
+                        -
+                        {{ $campaigns->lastItem() ?? 0 }}
+                        of
+                        {{ $campaigns->total() }}
+                        campaigns
+
+                    </div>
+
+                    <div class="flex gap-2">
+
+                        @for($i = 1; $i <= $campaigns->lastPage(); $i++)
+
+                                <a href="{{ $campaigns->url($i) }}" class="px-3 py-1 border rounded
+                                                                                                                                                                                                                                                                                                                                                                                                                                               {{ $campaigns->currentPage() == $i
+                            ? 'bg-red-500 text-white'
+                            : 'bg-white' }}">
+
+                                    {{ $i }}
+
+                                </a>
+
+                        @endfor
+
+                    </div>
+
+                </div>
+            </div>
+
+        @endif
+
+    </div>
 
 
     <script>
@@ -421,4 +537,5 @@
         });
 
     </script>
+
 @endsection

@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\ParameterController;
 use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\ProfileController;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Http\Controllers\VolunteerPortalController;
 
 
 Route::get('/auth', function () {
@@ -40,8 +42,61 @@ Route::post(
     '/campaign/delete/{id}',
     [CampaignController::class, 'delete']
 );
+Route::get(
+    '/parameters',
+    [ParameterController::class, 'index']
+);
+Route::post('/parameters/skills/store', [ParameterController::class, 'storeSkill']);
+
+Route::post('/parameters/skills/update/{id}', [ParameterController::class, 'updateSkill']);
+
+Route::post('/parameters/skills/delete/{id}', [ParameterController::class, 'deleteSkill']);
 
 
+Route::get(
+    '/parameters/skills/edit/{id}',
+    [ParameterController::class, 'editSkill']
+);
+
+Route::post(
+    '/parameters/roles/store',
+    [ParameterController::class, 'storeRole']
+);
+
+Route::get(
+    '/parameters/roles/edit/{id}',
+    [ParameterController::class, 'editRole']
+);
+
+Route::post(
+    '/parameters/roles/update/{id}',
+    [ParameterController::class, 'updateRole']
+);
+
+Route::post(
+    '/parameters/roles/delete/{id}',
+    [ParameterController::class, 'deleteRole']
+);
+
+Route::post(
+    '/parameters/shifts/store',
+    [ParameterController::class, 'storeShift']
+);
+
+Route::get(
+    '/parameters/shifts/edit/{id}',
+    [ParameterController::class, 'editShift']
+);
+
+Route::post(
+    '/parameters/shifts/update/{id}',
+    [ParameterController::class, 'updateShift']
+);
+
+Route::post(
+    '/parameters/shifts/delete/{id}',
+    [ParameterController::class, 'deleteShift']
+);
 
 Route::get('/volunteers', [VolunteerController::class, 'index']);
 Route::get('/volunteers/create', [VolunteerController::class, 'create']);
@@ -522,3 +577,55 @@ Route::get('/donor/profile', function () {
     return view('donor.profile.index');
 });
 
+Route::get(
+    '/volunteer/dashboard',
+    [VolunteerPortalController::class, 'dashboard']
+)->name('volunteer.dashboard');
+
+Route::get(
+    '/volunteer/history',
+    [VolunteerPortalController::class, 'history']
+)->name('volunteer.history');
+
+Route::get(
+    '/volunteer/attendance',
+    [VolunteerPortalController::class, 'attendance']
+)->name('volunteer.attendance');
+
+Route::get(
+    '/volunteer/profile',
+    [VolunteerPortalController::class, 'profile']
+)->name('volunteer.profile');
+
+Route::get(
+    '/volunteer/applications',
+    [VolunteerPortalController::class, 'applications']
+)->name('volunteer.applications');
+
+Route::get(
+    '/volunteer/opportunities',
+    [VolunteerPortalController::class, 'opportunities']
+)
+    ->name('volunteer.opportunities');
+
+Route::post(
+    '/volunteer/apply',
+    [VolunteerPortalController::class, 'apply']
+)
+    ->name('volunteer.apply');
+
+Route::get(
+    '/volunteer/application-success',
+    [VolunteerPortalController::class, 'applicationSuccess']
+)->name('volunteer.application.success');
+
+Route::get(
+    '/volunteer/application/{id}',
+    [VolunteerPortalController::class, 'application']
+)->name('volunteer.application');
+
+
+Route::get(
+    '/volunteer/application/withdraw/{id}',
+    [VolunteerPortalController::class, 'withdraw']
+)->name('volunteer.withdraw');

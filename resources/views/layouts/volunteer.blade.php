@@ -56,41 +56,39 @@
 
             <nav class="p-4 space-y-2 text-sm">
 
-                <a href="/dashboard" class="block px-3 py-2 rounded
-                {{ request()->is('dashboard') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Dashboard
-                </a>
+                <nav class="p-4 space-y-2 text-sm">
 
-                <a href="/campaign" class="block px-3 py-2 rounded
-                {{ request()->is('campaign') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    My Campaign
-                </a>
+                    <a href="{{ route('volunteer.dashboard') }}" class="block px-3 py-2 rounded
+        {{ request()->is('volunteer/dashboard') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+                        Dashboard
+                    </a>
 
+                    <a href="{{ route('volunteer.opportunities') }}" class="block px-3 py-2 rounded
+        {{ request()->is('volunteer/opportunities*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+                        Opportunities
+                    </a>
 
-                <a href="/volunteers" class="block px-3 py-2 rounded
-                    {{ request()->is('volunteers*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Volunteer Management
-                </a>
+                    <a href="{{ route('volunteer.applications') }}" class="block px-3 py-2 rounded
+        {{ request()->is('volunteer/applications*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+                        My Applications
+                    </a>
 
-                <a href="/donation" class="block px-3 py-2 rounded
-                     {{ request()->is('donation') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Donation
-                </a>
+                    <a href="{{ route('volunteer.history') }}" class="block px-3 py-2 rounded
+        {{ request()->is('volunteer/history*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+                        History
+                    </a>
 
-                <a href="/communication"
-                    class="block px-3 py-2 rounded
-                     {{ request()->is('communication*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Communication
-                </a>
-                <a href="/parameters" class="block px-3 py-2 rounded
-                     {{ request()->is('parameters') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Parameters
-                </a>
+                    <a href="{{ route('volunteer.attendance') }}" class="block px-3 py-2 rounded
+        {{ request()->is('volunteer/attendance*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+                        Attendance
+                    </a>
 
-                <a href="/profile" class="block px-3 py-2 rounded 
-                     {{ request()->is('profile*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    My Profile
-                </a>
+                    <a href="{{ route('volunteer.profile') }}" class="block px-3 py-2 rounded
+        {{ request()->is('volunteer/profile*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+                        My Profile
+                    </a>
+
+                </nav>
 
             </nav>
 

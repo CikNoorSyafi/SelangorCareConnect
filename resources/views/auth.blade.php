@@ -101,6 +101,15 @@
         <div class="flex-1 h-full flex items-center justify-center bg-white p-10">
 
             <div class="w-full max-w-lg">
+                @if(session('success'))
+
+                    <div class="mb-4 p-4 rounded-lg bg-green-100 text-green-700 border border-green-300">
+
+                        {{ session('success') }}
+
+                    </div>
+
+                @endif
 
                 <h2 class="text-3xl font-bold mb-2">Get Started</h2>
                 <p class="text-gray-500 mb-6">Create an account to begin your journey of giving back.</p>
@@ -569,7 +578,24 @@ transition-all h-28">
             });
 
         </script>
+        @if(session('showLogin'))
 
+            <script>
+
+                document.addEventListener(
+                    'DOMContentLoaded',
+                    function () {
+
+                        document
+                            .getElementById('tabLogin')
+                            .click();
+
+                    }
+                );
+
+            </script>
+
+        @endif
 </body>
 
 </html>

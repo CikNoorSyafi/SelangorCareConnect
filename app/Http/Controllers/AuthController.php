@@ -3,43 +3,101 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
     // LOGIN FUNCTION
     public function login(Request $request)
     {
-        $email = trim($request->email);
-        $password = trim($request->password);
+        $user = User::where(
+            'email',
+            $request->email
+        )->first();
 
+        if (
+            !$user ||
+            !Hash::check(
+                $request->password,
+                $user->password
+            )
+        ) {
+            return back()
+                ->with(
+                    'error',
+                    'Invalid credentials'
+                );
+        }
 
-        if ($email === 'admin@test.com' && $password === '12345678') {
+        session([
+            'user' => [
 
-            session([
-                'user' => [
-                    'name' => 'Admin User',
-                    'email' => $email,
-                    'role' => 'organizer'
-                ]
-            ]);
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role
 
+            ]
+        ]);
+
+        if ($user->role == 'organizer') {
             return redirect('/dashboard');
         }
 
-        if ($email === 'donor@test.com' && $password === '12345678') {
-
-            session([
-                'user' => [
-                    'name' => 'Amirul Hakim',
-                    'email' => $email,
-                    'role' => 'donor'
-                ]
-            ]);
-
+        if ($user->role == 'donor') {
             return redirect('/donor/dashboard');
         }
 
-        return back()->with('error', 'Invalid credentials');
+        if ($user->role == 'volunteer') {
+            return redirect('/volunteer/dashboard');
+        }
+
+        return back();
+    }
+
+    public function register(Request $request)
+    {
+        $request->validate([
+
+            'name' => 'required',
+
+            'email' => 'required|email|unique:users,email',
+
+            'password' => [
+                'required',
+                'min:8',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/'
+            ],
+
+            'role' => 'required'
+
+        ]);
+
+        User::create([
+
+            'name' => $request->name,
+
+            'email' => $request->email,
+
+            'password' => Hash::make(
+                $request->password
+            ),
+
+            'role' => $request->role
+
+        ]);
+
+        return redirect('/auth')
+            ->with(
+                'success',
+                'Registration successful. You may now sign in.'
+            )
+            ->with(
+                'showLogin',
+                true
+            );
     }
 
     // LOGOUT FUNCTION
