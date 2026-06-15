@@ -1,28 +1,36 @@
 @extends('layouts.volunteer')
 
 @section('content')
+    @php
+        use Illuminate\Support\Str;
+    @endphp
 
     <div class="space-y-6">
 
+
         <!-- PAGE HEADER -->
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-start">
 
             <div>
-                <h1 class="text-4xl font-bold">
-                    Volunteer Dashboard
+                <h1 class="text-5xl font-extrabold">
+                    Welcome Back,
+                    {{ strtoupper(session('user.name')) }}
                 </h1>
 
                 <p class="text-gray-500 mt-2">
-                    Browse campaigns and manage your volunteer participation.
+                    Thank you for supporting community initiatives through volunteering.
                 </p>
             </div>
 
-            <a href="{{ route('volunteer.applications') }}"
-                class="bg-white border px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50">
+            <div class="flex items-center gap-4">
+                <a href="{{ route('volunteer.history') }}"
+                    class="bg-white border px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50">
 
-                View History
+                    View History
 
-            </a>
+                </a>
+
+            </div>
 
         </div>
 
@@ -30,33 +38,37 @@
 
         <div class="grid md:grid-cols-4 gap-5">
 
-            <div class="bg-white rounded-xl shadow p-5">
+            <a href="{{ route('volunteer.applications') }}"
+                class="block bg-white rounded-xl shadow p-5 hover:shadow-lg transition">
                 <p class="text-gray-500 text-sm">Applications</p>
                 <h2 class="text-3xl font-bold text-red-500">
-                    {{ count(session('volunteer_applications', [])) }}
+                    {{ $totalApplications }}
                 </h2>
-            </div>
+            </a>
 
-            <div class="bg-white rounded-xl shadow p-5">
+            <a href="{{ route('volunteer.applications') }}"
+                class="block bg-white rounded-xl shadow p-5 hover:shadow-lg transition">
                 <p class="text-gray-500 text-sm">Approved</p>
                 <h2 class="text-3xl font-bold text-green-500">
-                    1
+                    {{ $approved }}
                 </h2>
-            </div>
+            </a>
 
-            <div class="bg-white rounded-xl shadow p-5">
+            <a href="{{ route('volunteer.applications') }}"
+                class="block bg-white rounded-xl shadow p-5 hover:shadow-lg transition">
                 <p class="text-gray-500 text-sm">Pending</p>
                 <h2 class="text-3xl font-bold text-yellow-500">
-                    1
+                    {{ $pending }}
                 </h2>
-            </div>
+            </a>
 
-            <div class="bg-white rounded-xl shadow p-5">
+            <a href="{{ route('volunteer.applications') }}"
+                class="block bg-white rounded-xl shadow p-5 hover:shadow-lg transition">
                 <p class="text-gray-500 text-sm">Volunteer Hours</p>
                 <h2 class="text-3xl font-bold text-blue-500">
-                    24
+                    {{ $hours }}
                 </h2>
-            </div>
+            </a>
 
         </div>
 
@@ -71,7 +83,7 @@
                 </h2>
 
                 <span class="text-red-500 text-sm">
-                    {{ count(session('volunteer_applications', [])) }} Active
+                    {{ $activeApplications->count() }} Active
                 </span>
 
             </div>
@@ -90,23 +102,24 @@
 
                 <tbody>
 
-                    @forelse(session('volunteer_applications', []) as $app)
+                    @forelse($activeApplications as $app)
 
-                        <tr class="border-t">
+                        <tr onclick="window.location='{{ route('volunteer.application.view', $app->id) }}'"
+                            class="border-t cursor-pointer hover:bg-gray-50">
 
                             <td class="p-4">
-                                {{ $app['campaign'] }}
+                                {{ $app->campaign->name ?? 'N/A' }}
                             </td>
 
                             <td class="p-4">
-                                {{ $app['shift'] }}
+                                {{ $app->shift }}
                             </td>
 
                             <td class="p-4">
 
                                 <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm">
 
-                                    {{ $app['status'] }}
+                                    {{ $app->status }}
 
                                 </span>
 
@@ -137,7 +150,7 @@
             <div class="flex justify-between items-center mb-4">
 
                 <h2 class="text-xl font-bold">
-                    Available Campaigns
+                    Open Volunteer Campaigns
                 </h2>
 
                 <input type="text" placeholder="Search campaign..." class="border rounded-lg px-4 py-2 w-72">
@@ -148,50 +161,54 @@
 
                 @foreach($campaigns as $campaign)
 
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
+                        <div class="bg-white rounded-xl shadow overflow-hidden flex flex-col">
 
-                        <div class="h-40 bg-gray-200"></div>
+                            <div class="h-40 bg-gray-200"></div>
 
-                        <div class="p-5">
+                            <div class="p-5 flex flex-col flex-grow">
 
-                            <span class="text-xs text-gray-500 uppercase">
+                                <span class="text-xs text-gray-500 uppercase">
+                                    {{ $campaign->type }}
+                                </span>
 
-                                {{ $campaign['category'] }}
+                                <h3 class="font-bold text-lg mt-2">
+                                    {{ $campaign->name }}
+                                </h3>
 
-                            </span>
+                                <p class="text-gray-600 text-sm mt-2 h-12 overflow-hidden">
+                                    {{ Str::limit($campaign->description, 60) }}
+                                </p>
 
-                            <h3 class="font-bold text-lg mt-2">
+                                <p class="text-gray-500 text-sm mt-3">
+                                    {{ $campaign->location }}
+                                </p>
 
-                                {{ $campaign['title'] }}
+                                <p class="text-gray-500 text-sm">
+                                    {{ $campaign->start_date
+                    ? \Carbon\Carbon::parse($campaign->start_date)->format('d M Y')
+                    : 'N/A'
+                                                                                                                                    }}
+                                    -
+                                    {{ $campaign->end_date
+                    ? \Carbon\Carbon::parse($campaign->end_date)->format('d M Y')
+                    : 'N/A'
+                                                                                                                                    }}
+                                </p>
 
-                            </h3>
+                                <div class="mt-auto pt-4">
 
-                            <p class="text-gray-500 text-sm mt-2">
+                                    <a href="{{ route('volunteer.application', $campaign->id) }}"
+                                        class="block text-center bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg">
 
-                                {{ $campaign['location'] }}
+                                        Apply Now
 
-                            </p>
+                                    </a>
 
-                            <p class="text-gray-500 text-sm">
-
-                                {{ $campaign['date'] }}
-
-                            </p>
-
-                            <div class="mt-4">
-
-                                <a href="{{ route('volunteer.application', $campaign['id']) }}"
-                                    class="block text-center bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg">
-
-                                    Apply Now
-
-                                </a>
+                                </div>
 
                             </div>
 
                         </div>
-
-                    </div>
 
                 @endforeach
 

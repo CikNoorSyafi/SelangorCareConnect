@@ -51,7 +51,7 @@
 
                 <h3 class="text-xl font-bold mt-1">
 
-                    {{ $donation['campaign'] }}
+                    {{ $donation->campaign->name ?? 'Community Fund' }}
 
                 </h3>
 
@@ -66,7 +66,7 @@
 
                 <h3 class="text-xl font-bold mt-1">
 
-                    {{ $donation['campaign_type'] ?? 'N/A' }}
+                    {{ $donation->campaign->type ?? 'Community Fund' }}
 
                 </h3>
 
@@ -75,21 +75,21 @@
             <div>
                 <p class="text-sm text-gray-400">Amount</p>
                 <h3 class="text-xl font-bold mt-1">
-                    RM {{ number_format((float) $donation['amount'], 2) }}
+                    RM {{ number_format((float) $donation->amount, 2) }}
                 </h3>
             </div>
 
             <div>
                 <p class="text-sm text-gray-400">Status</p>
                 <h3 class="text-xl font-bold mt-1">
-                    {{ $donation['status'] }}
+                    {{ $donation->status }}
                 </h3>
             </div>
 
             <div>
                 <p class="text-sm text-gray-400">Date</p>
                 <h3 class="text-xl font-bold mt-1">
-                    {{ $donation['date'] }}
+                    {{ $donation->created_at->format('d M Y h:i A') }}
                 </h3>
             </div>
 

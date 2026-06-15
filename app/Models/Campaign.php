@@ -25,4 +25,20 @@ class Campaign extends Model
             'campaign_id'
         );
     }
+
+    public function skills()
+    {
+        return $this->belongsToMany(
+            Skill::class,
+            'campaign_skills'
+        );
+    }
+
+    public function campaignSkills()
+    {
+        return $this->hasMany(
+            CampaignSkill::class,
+            'campaign_id'
+        );
+    }
 }

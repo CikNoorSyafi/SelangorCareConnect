@@ -23,22 +23,7 @@
         </div>
 
         <!-- Statistics -->
-        @php
 
-            $totalContributed = 0;
-
-            foreach ($history ?? [] as $transaction) {
-
-                if ($transaction['status'] == 'SUCCESS') {
-
-                    $totalContributed +=
-                        $transaction['amount'];
-
-                }
-
-            }
-
-        @endphp
         <div class="grid md:grid-cols-3 gap-6 mb-8">
 
             <a href="/donor/history">
@@ -59,7 +44,7 @@
 
             </a>
 
-            <a href="/campaign">
+            <a href="/donor/history">
 
                 <div class="bg-white border rounded-3xl p-6 hover:shadow-lg transition cursor-pointer">
 
@@ -68,7 +53,7 @@
                     </p>
 
                     <h3 class="text-4xl font-black mt-2">
-                        {{ count($campaigns) }}
+                        {{ $campaignsSupported }}
                     </h3>
 
                 </div>
@@ -84,7 +69,7 @@
                     </p>
 
                     <h3 class="text-4xl font-black mt-2">
-                        RM 25,000
+                        RM {{ number_format($communityFund, 2) }}
                     </h3>
 
                 </div>
@@ -105,44 +90,41 @@
             </div>
 
             @if(count($campaigns) > 0)
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    @foreach($campaigns as $campaign)
 
-                @foreach($campaigns as $campaign)
+                        @if($campaign['status'] == 'Approved')
 
-                    @if($campaign['status'] == 'Approved')
+                            <div class="bg-white border rounded-2xl p-6 h-full">
 
-                        <div class="bg-white border rounded-3xl p-8 mb-4">
+                                <div class="flex flex-col h-full">
 
-                            <div class="flex justify-between items-start">
-
-                                <div>
-
-                                    <h3 class="text-2xl font-bold">
+                                    <h3 class="text-xl font-bold">
                                         {{ $campaign['name'] }}
                                     </h3>
 
                                     <p class="text-gray-500 mt-2">
                                         {{ $campaign['location'] }}
                                     </p>
+@if(!empty($campaign['description']))
+    <p class="mt-2 text-gray-600 break-words">
+        {{ \Illuminate\Support\Str::limit($campaign['description'], 100) }}
+    </p>
+@endif
 
-                                    <p class="mt-3 text-gray-600">
-                                        {{ $campaign['description'] }}
-                                    </p>
 
-                                    <div class="mt-4">
+
+                                    <div class="mt-2">
 
                                         <div class="flex items-center gap-4">
 
                                             <span class="font-semibold text-red-500">
-
                                                 Target:
                                                 RM {{ number_format((float) $campaign['target'], 2) }}
-
                                             </span>
 
                                             <span class="font-semibold text-green-600">
-
                                                 {{ $campaign['progress'] }}%
-
                                             </span>
 
                                         </div>
@@ -150,15 +132,11 @@
                                         <div class="mt-2">
 
                                             <span class="font-medium">
-
                                                 Collected:
-
                                             </span>
 
                                             <span class="text-green-600 font-semibold">
-
                                                 RM {{ number_format($campaign['collected'], 2) }}
-
                                             </span>
 
                                         </div>
@@ -166,23 +144,12 @@
                                         <div class="mt-1">
 
                                             <span class="font-medium">
-
                                                 Remaining:
-
                                             </span>
 
                                             <span>
-
                                                 RM {{ number_format($campaign['remaining'], 2) }}
-
                                             </span>
-
-                                        </div>
-
-                                        <div class="mt-1 text-gray-500">
-
-                                            Volunteers:
-                                            {{ count($campaign['volunteers'] ?? []) }}
 
                                         </div>
 
@@ -192,10 +159,8 @@
 
                                         <div class="w-full bg-gray-200 rounded-full h-3">
 
-                                            <div class="bg-green-500 h-3 rounded-full" style="
-                                                                                                                width:
-                                                                                                                {{ min(100, $campaign['progress']) }}%;
-                                                                                                            ">
+                                            <div class="bg-green-500 h-3 rounded-full"
+                                                style="width: {{ min(100, $campaign['progress']) }}%;">
                                             </div>
 
                                         </div>
@@ -209,29 +174,23 @@
 
                                     </div>
 
-                                    <p class="text-sm text-gray-500 mt-1">
-                                        Volunteers:
-                                        {{ count($campaign['volunteers'] ?? []) }}
-                                    </p>
+                                    <div class="mt-auto pt-4">
 
-                                </div>
+                                        <a href="/donor/donation?campaign={{ urlencode($campaign['name']) }}"
+                                            class="block w-full text-center bg-red-500 text-white py-3 rounded-xl hover:bg-red-600">
 
-                                <div>
+                                            Donate Now
 
-                                    <a href="/donor/donation?campaign={{ urlencode($campaign['name']) }}"
-                                        class="bg-red-500 text-white px-6 py-3 rounded-xl inline-block">
+                                        </a>
 
-                                        Donate Now
-
-                                    </a>
+                                    </div>
 
                                 </div>
 
                             </div>
-
-                        </div>
-                    @endif
-                @endforeach
+                        @endif
+                    @endforeach
+                </div>
 
             @else
 
@@ -293,17 +252,17 @@
 
                     @if(count($history) > 0)
 
-                        @foreach(array_reverse($history) as $transaction)
+                        @foreach($history as $transaction)
 
                             <tr class="border-b">
 
                                 <td class="py-4">
 
-                                    {{ $transaction['datetime']->format('d M Y') }}
+                                    {{ $transaction->created_at->format('d M Y') }}
 
                                     <div class="text-xs text-gray-500">
 
-                                        {{ $transaction['datetime']->format('h:i A') }}
+                                        {{ $transaction->created_at->format('h:i A') }}
 
                                     </div>
 
@@ -311,19 +270,19 @@
 
                                 <td class="py-4">
 
-                                    {{ $transaction['campaign'] ?? 'Community Fund' }}
+                                    {{ $transaction->campaign_type }}
 
                                 </td>
 
                                 <td class="py-4">
 
-                                    RM {{ number_format($transaction['amount'], 2) }}
+                                    RM {{ number_format($transaction->amount, 2) }}
 
                                 </td>
 
                                 <td class="py-4">
 
-                                    @if($transaction['status'] == 'SUCCESS')
+                                    @if($transaction->status == 'Allocated')
 
                                         <span class="text-green-600 font-semibold">
 

@@ -1,4 +1,4 @@
-@extends('layouts.organizer')
+@extends('layouts.' . session('user.role'))
 
 @section('content')
 
@@ -35,8 +35,7 @@
                         Full Name
                     </label>
 
-                    <input type="text" name="name" value="{{ $profile['name'] }}"
-                        class="w-full border rounded-2xl px-5 py-4">
+                    <input type="text" name="name" value="{{ $user->name }}" class="w-full border rounded-2xl px-5 py-4">
                 </div>
 
                 <div>
@@ -44,8 +43,7 @@
                         Email Address
                     </label>
 
-                    <input type="email" name="email" value="{{ $profile['email'] }}"
-                        class="w-full border rounded-2xl px-5 py-4">
+                    <input type="email" name="email" value="{{ $user->email }}" class="w-full border rounded-2xl px-5 py-4">
                 </div>
 
                 <div>
@@ -53,8 +51,7 @@
                         Phone Number
                     </label>
 
-                    <input type="text" name="phone" value="{{ $profile['phone'] }}"
-                        class="w-full border rounded-2xl px-5 py-4">
+                    <input type="text" name="phone" value="{{ $user->phone }}" class="w-full border rounded-2xl px-5 py-4">
                 </div>
 
                 <div>
@@ -62,22 +59,26 @@
                         Role
                     </label>
 
-                    <input type="text" name="role" value="{{ $profile['role'] }}"
-                        class="w-full border rounded-2xl px-5 py-4">
+                    <input type="text" value="{{ ucfirst($user->role) }}" readonly
+                        class="w-full border rounded-2xl px-5 py-4 bg-gray-100 text-gray-500 cursor-not-allowed">
                 </div>
 
             </div>
 
-            <div class="mt-6">
+            @if(session('user.role') == 'organizer')
 
-                <label class="block mb-2 font-semibold">
-                    Organization
-                </label>
+                <div class="mt-6">
 
-                <input type="text" name="organization" value="{{ $profile['organization'] }}"
-                    class="w-full border rounded-2xl px-5 py-4">
+                    <label class="block mb-2 font-semibold">
+                        Organization
+                    </label>
 
-            </div>
+                    <input type="text" name="organization" value="{{ $user->organization }}"
+                        class="w-full border rounded-2xl px-5 py-4">
+
+                </div>
+
+            @endif
 
             <div class="mt-8">
 
@@ -85,29 +86,104 @@
                     Notification Preferences
                 </h3>
 
-                <div class="space-y-4">
+                {{-- ORGANIZER --}}
+                @if(session('user.role') == 'organizer')
 
-                    <label class="flex items-center gap-3">
-                        <input type="checkbox" name="campaign_notifications" {{ $profile['campaign_notifications'] ? 'checked' : '' }}>
-                        Campaign Notifications
-                    </label>
+                    <div class="space-y-3">
 
-                    <label class="flex items-center gap-3">
-                        <input type="checkbox" name="volunteer_notifications" {{ $profile['volunteer_notifications'] ? 'checked' : '' }}>
-                        Volunteer Notifications
-                    </label>
+                        <label class="flex items-center gap-3">
 
-                    <label class="flex items-center gap-3">
-                        <input type="checkbox" name="donation_notifications" {{ $profile['donation_notifications'] ? 'checked' : '' }}>
-                        Donation Notifications
-                    </label>
+                            <input type="checkbox" name="campaign_notifications" {{ $user->campaign_notifications ? 'checked' : '' }}>
 
-                    <label class="flex items-center gap-3">
-                        <input type="checkbox" name="communication_notifications" {{ $profile['communication_notifications'] ? 'checked' : '' }}>
-                        Communication Notifications
-                    </label>
+                            <span>
+                                Campaign Notifications
+                            </span>
 
-                </div>
+                        </label>
+
+                        <label class="flex items-center gap-3">
+
+                            <input type="checkbox" name="volunteer_notifications" {{ $user->volunteer_notifications ? 'checked' : '' }}>
+
+                            <span>
+                                Volunteer Notifications
+                            </span>
+
+                        </label>
+
+                        <label class="flex items-center gap-3">
+
+                            <input type="checkbox" name="communication_notifications" {{ $user->communication_notifications ? 'checked' : '' }}>
+
+                            <span>
+                                Communication Notifications
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                @endif
+
+
+                {{-- DONOR --}}
+                @if(session('user.role') == 'donor')
+
+                    <div class="space-y-3">
+
+                        <label class="flex items-center gap-3">
+
+                            <input type="checkbox" name="donation_notifications" {{ $user->donation_notifications ? 'checked' : '' }}>
+
+                            <span>
+                                Donation Notifications
+                            </span>
+
+                        </label>
+
+                        <label class="flex items-center gap-3">
+
+                            <input type="checkbox" name="communication_notifications" {{ $user->communication_notifications ? 'checked' : '' }}>
+
+                            <span>
+                                Communication Notifications
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                @endif
+
+
+                {{-- VOLUNTEER --}}
+                @if(session('user.role') == 'volunteer')
+
+                    <div class="space-y-3">
+
+                        <label class="flex items-center gap-3">
+
+                            <input type="checkbox" name="campaign_notifications" {{ $user->campaign_notifications ? 'checked' : '' }}>
+
+                            <span>
+                                Campaign Notifications
+                            </span>
+
+                        </label>
+
+                        <label class="flex items-center gap-3">
+
+                            <input type="checkbox" name="volunteer_notifications" {{ $user->volunteer_notifications ? 'checked' : '' }}>
+
+                            <span>
+                                Volunteer Notifications
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                @endif
 
             </div>
 

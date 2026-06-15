@@ -60,15 +60,11 @@
 
                 @foreach($campaigns as $campaign)
 
-                    @if($campaign['status'] == 'Approved')
+                    <option value="{{ $campaign->name }}">
 
-                        <option value="{{ $campaign['name'] }}" {{ request('campaign') == $campaign['name'] ? 'selected' : '' }}>
+                        {{ $campaign->name }}
 
-                            {{ $campaign['name'] }}
-
-                        </option>
-
-                    @endif
+                    </option>
 
                 @endforeach
 

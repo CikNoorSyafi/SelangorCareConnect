@@ -29,37 +29,25 @@
             <div class="flex gap-3">
 
                 <!-- EXPORT -->
-                <button
+                <a href="/donation/export"
                     class="flex items-center gap-2 px-5 py-3 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition">
 
-                    <!-- DOWNLOAD SVG -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
 
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 4v10m0 0l-4-4m4 4l4-4M4 20h16" />
+
                     </svg>
 
                     <span class="font-semibold">
+
                         Export Report
+
                     </span>
-                </button>
 
-                <!-- ADD -->
-                <a href="/donation/create"
-                    class="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 text-white shadow-lg hover:bg-red-700 transition">
-
-                    <!-- PLUS SVG -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-
-                    <span class="font-semibold">
-                        Record Manual Donation
-                    </span>
                 </a>
+
 
             </div>
         </div>
@@ -109,8 +97,9 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-blue-600" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
 
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3
-                                                                                            3-1.343 3-3-1.343-3-3-3z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3
+                                                                                                                                                3-1.343 3-3-1.343-3-3-3z" />
                         </svg>
 
                     </div>
@@ -131,36 +120,6 @@
 
             </div>
 
-            <!-- PENDING -->
-            <a href="/donation?status=Pending" class="bg-white border rounded-2xl p-6 hover:shadow-md transition">
-
-                <div class="flex justify-between items-start">
-
-                    <div class="p-3 rounded-xl bg-yellow-50">
-
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-yellow-600" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
-                        </svg>
-
-                    </div>
-
-                    <span class="text-yellow-600 font-bold text-sm">
-                        Action Required
-                    </span>
-
-                </div>
-
-                <p class="text-gray-500 mt-6 text-sm font-semibold uppercase">
-                    Pending Verifications
-                </p>
-
-                <h2 class="text-4xl font-black mt-2">
-                    {{ $pendingVerifications }}
-                </h2>
-
-            </a>
 
             <!-- CONTRIBUTORS -->
             <div class="bg-white border rounded-2xl p-6 hover:shadow-md transition">
@@ -279,7 +238,7 @@
                             <tr class="border-t hover:bg-gray-50 transition">
 
                                 <td class="px-6 py-5 text-gray-600">
-                                    {{ $donation['date'] }}
+                                    {{ $donation->created_at->format('d M Y H:i') }}
                                 </td>
 
                                 <td class="px-6 py-5">
@@ -295,34 +254,35 @@
                                 </td>
 
                                 <td class="px-6 py-5">
-                                    {{ $donation['campaign'] }}
+                                    {{ $donation->campaign->name ?? 'Community Fund' }}
                                 </td>
-                                <td class="px-6 py-6">
+
+                                <td class="px-6 py-5">
 
                                     <span class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">
 
-                                        {{ $donation['campaign_type'] ?? 'N/A' }}
+                                        {{ $donation->campaign_type }}
 
                                     </span>
 
                                 </td>
 
                                 <td class="px-6 py-5 font-bold">
-                                    RM {{ number_format((float) $donation['amount'], 2) }}
+                                    RM {{ number_format($donation->amount, 2) }}
                                 </td>
 
                                 <td class="px-6 py-5">
 
-                                    @if($donation['status'] == 'Allocated')
+                                    @if($donation->status == 'Allocated')
 
                                         <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
                                             Allocated
                                         </span>
 
-                                    @else
+                                    @elseif($donation->status == 'Failed')
 
-                                        <span class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-semibold">
-                                            Pending
+                                        <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
+                                            Failed
                                         </span>
 
                                     @endif
@@ -334,8 +294,7 @@
                                     <div class="flex justify-center gap-3">
 
                                         <!-- VIEW -->
-                                        <a href="/donation/view/{{ $donation['id'] }}"
-                                            class="text-gray-500 hover:text-blue-600">
+                                        <a href="/donation/view/{{ $donation->id }}" class="text-gray-500 hover:text-blue-600">
 
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -345,40 +304,9 @@
 
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M2.458 12C3.732 7.943 7.523 5
-                                                                                                             12 5c4.478 0 8.268 2.943
-                                                                                                             9.542 7-1.274 4.057-5.064 7-9.542
-                                                                                                             7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-
-                                        </a>
-
-                                        <!-- EDIT -->
-                                        <a href="/donation/edit/{{ $donation['id'] }}"
-                                            class="text-gray-500 hover:text-yellow-600">
-
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11 5h2m-1-1v2m-7
-                                                                                                             9l9-9 4 4-9 9H5v-4z" />
-                                            </svg>
-
-                                        </a>
-
-                                        <!-- DELETE -->
-                                        <a href="/donation/delete/{{ $donation['id'] }}"
-                                            onclick="return confirm('Delete this donation?')"
-                                            class="text-gray-500 hover:text-red-600">
-
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
-                                                                                                             a2 2 0 01-1.995-1.858L5 7m5
-                                                                                                             4v6m4-6v6M1 7h22m-5-4H8
-                                                                                                             m0 0L7 7m1-4h8l1 4" />
+                                                                                                                                                                                                                     12 5c4.478 0 8.268 2.943
+                                                                                                                                                                                                                     9.542 7-1.274 4.057-5.064 7-9.542
+                                                                                                                                                                                                                     7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
 
                                         </a>

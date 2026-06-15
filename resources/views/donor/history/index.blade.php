@@ -21,9 +21,9 @@
 
             foreach ($history as $transaction) {
 
-                if ($transaction['status'] == 'SUCCESS') {
+                if ($transaction->status == 'Allocated') {
 
-                    $totalDonated += $transaction['amount'];
+                    $totalDonated += $transaction->amount;
 
                 }
 
@@ -32,7 +32,7 @@
             if (count($history) > 0) {
 
                 $latestAmount =
-                    end($history)['amount'];
+                    $history->first()?->amount ?? 0;
 
             }
 
@@ -87,64 +87,45 @@
 
         <div class="bg-white border rounded-3xl mb-6 overflow-hidden">
 
-            <div class="p-6 flex flex-wrap gap-4">
+            <form method="GET" action="/donor/history" class="p-6 flex flex-wrap gap-4">
 
-                <input type="text" id="historySearch" placeholder="Filter by reference, campaign, or method..."
-                    class="border rounded-xl px-4 py-3 w-96">
+                <input type="text" name="search" value="{{ request('search') }}"
+                    placeholder="Search reference, campaign or payment method..." class="border rounded-xl px-4 py-3 w-96">
 
-                <select onchange="window.location.href='/donor/history?status=' + this.value"
-                    class="border rounded-xl px-4 py-3">
+                <select name="status" class="border rounded-xl px-4 py-3">
 
-                    <option value="">
+                    <option value="" {{ request('status') == '' ? 'selected' : '' }}>
                         All Status
                     </option>
 
-                    <option value="SUCCESS" {{ request('status') == 'SUCCESS' ? 'selected' : '' }}>
+                    <option value="Allocated" {{ request('status') == 'Allocated' ? 'selected' : '' }}>
                         Completed
                     </option>
 
-                    <option value="FAILED" {{ request('status') == 'FAILED' ? 'selected' : '' }}>
+                    <option value="Failed" {{ request('status') == 'Failed' ? 'selected' : '' }}>
                         Failed
                     </option>
 
                 </select>
 
-            </div>
+                <button type="submit" class="px-6 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600">
+                    Search
+                </button>
+
+                <a href="/donor/history" class="px-6 py-3 bg-gray-100 rounded-xl hover:bg-gray-200">
+                    Reset
+                </a>
+
+            </form>
 
         </div>
 
         <div class="bg-white rounded-3xl border overflow-hidden shadow-sm">
             @php
 
-                $page = request('page', 1);
-
-                $perPage = 8;
-
-                $historyReversed =
-                    array_reverse($history, true);
-
-                $totalRecords =
-                    count($historyReversed);
-
-                $totalPages =
-                    ceil(
-                        $totalRecords /
-                        $perPage
-                    );
-
-                $offset =
-                    ($page - 1) * $perPage;
-
-                $pagedHistory =
-                    array_slice(
-                        $historyReversed,
-                        $offset,
-                        $perPage,
-                        true
-                    );
+                $totalRecords = $history->total();
 
             @endphp
-
             <table class="w-full">
 
                 <thead class="bg-red-50">
@@ -187,52 +168,58 @@
 
                     @if(count($history) > 0)
 
-                        @foreach($pagedHistory as $index => $transaction)
+                        @foreach($history as $transaction)
 
                             <tr class="border-b hover:bg-gray-50 transition">
 
                                 <td class="p-5">
 
-                                    {{ $transaction['datetime']->format('d M Y') }}
+                                    {{ $transaction->created_at->format('d M Y') }}
 
                                 </td>
 
                                 <td class="p-5">
 
-                                    {{ $transaction['reference'] }}
+                                    {{ $transaction->transaction_id }}
 
                                 </td>
 
                                 <td class="p-5">
 
-                                    {{ $transaction['campaign'] ?? 'Community Fund' }}
+                                    {{ $transaction->campaign_type ?? 'Community Fund' }}
 
                                 </td>
 
                                 <td class="p-5">
 
-                                    RM {{ number_format($transaction['amount'], 2) }}
+                                    RM {{ number_format($transaction->amount, 2) }}
 
                                 </td>
 
                                 <td class="p-5">
 
-                                    {{ $transaction['method'] }}
+                                    {{ $transaction->payment_method }}
 
                                 </td>
 
                                 <td class="p-5">
 
-                                    @if($transaction['status'] == 'SUCCESS')
+                                    @if($transaction->status == 'Allocated')
 
                                         <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
                                             Completed
                                         </span>
 
-                                    @else
+                                    @elseif($transaction->status == 'Failed')
 
                                         <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">
                                             Failed
+                                        </span>
+
+                                    @else
+
+                                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                                            {{ $transaction->status }}
                                         </span>
 
                                     @endif
@@ -243,29 +230,29 @@
 
                                     <div class="flex gap-2">
 
-                                        <a href="/donor/history/view/{{ $index }}" title="View Details"
+                                        <a href="/donor/history/view/{{ $transaction->id }}" title="View Details"
                                             class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200">
 
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
-                                                stroke="currentColor">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
 
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0
-                                                                                                                                                     3 3 0 016 0zm7.938 0
-                                                                                                                                                     C20.73 16.338 16.803 19
-                                                                                                                                                     12 19c-4.803 0-8.73-2.662
-                                                                                                                                                     -10.938-7
-                                                                                                                                                     C3.27 7.662 7.197 5
-                                                                                                                                                     12 5c4.803 0 8.73 2.662
-                                                                                                                                                     10.938 7z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644
+                                                                               C3.423 7.51 7.36 4.5 12 4.5
+                                                                               c4.638 0 8.573 3.007 9.963 7.178
+                                                                               .07.207.07.431 0 .644
+                                                                               C20.577 16.49 16.64 19.5 12 19.5
+                                                                               c-4.638 0-8.573-3.007-9.964-7.178z" />
+
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0
+                                                                               3 3 0 016 0z" />
 
                                             </svg>
 
                                         </a>
 
-                                        @if($transaction['status'] == 'SUCCESS')
+                                        @if($transaction->status == 'Allocated')
 
-                                            <a href="/donor/download-receipt/{{ $index }}" title="Download Receipt"
+                                            <a href="/donor/download-receipt/{{ $transaction->id }}" title="Download Receipt"
                                                 class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-red-100 text-red-600 hover:bg-red-200">
 
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
@@ -300,100 +287,56 @@
                         </tr>
 
                     @endif
-
+                    <tr id="noResultsRow" style="display:none;">
+                        <td colspan="7" class="py-8 text-center text-gray-500">
+                            No records found.
+                        </td>
+                    </tr>
                 </tbody>
 
             </table>
 
-            <div class="px-6 py-4 border-t text-gray-500" id="recordCount">
 
-                Showing
+            <div class="flex justify-between items-center px-8 py-5 border-t">
 
-                {{ $offset + 1 }}
+                <p class="text-gray-500 text-sm">
 
-                to
+                    Showing
 
-                {{ min($offset + $perPage, $totalRecords) }}
+                    {{ $history->firstItem() ?? 0 }}
 
-                of
+                    -
 
-                {{ $totalRecords }}
+                    {{ $history->lastItem() ?? 0 }}
 
-                donation records
+                    of
+
+                    {{ $history->total() }}
+
+                    transactions
+
+                </p>
+
+                <div class="flex gap-2">
+
+                    @for ($i = 1; $i <= $history->lastPage(); $i++)
+
+                                <a href="{{ $history->url($i) }}" class="w-10 h-10 flex items-center justify-center rounded border
+                                                                    {{ $history->currentPage() == $i
+                        ? 'bg-red-500 text-white border-red-500'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100' }}">
+
+                                    {{ $i }}
+
+                                </a>
+
+                    @endfor
+
+                </div>
 
             </div>
 
-            <div class="flex justify-end gap-3 p-6">
-
-                @for($i = 1; $i <= $totalPages; $i++)
-
-                        <a href="?status={{ request('status') }}&page={{ $i }}" class="w-12 h-12 flex items-center justify-center rounded-xl font-semibold transition
-
-                        {{ $page == $i
-                    ? 'bg-red-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-
-                            {{ $i }}
-
-                        </a>
-
-                @endfor
-
-            </div>
         </div>
 
     </div>
-
-    <script>
-
-        document.addEventListener(
-            'DOMContentLoaded',
-            function () {
-
-                const search =
-                    document.getElementById(
-                        'historySearch'
-                    );
-
-                const rows =
-                    document.querySelectorAll(
-                        '#historyTable tr'
-                    );
-
-                function filterTable() {
-
-                    const searchValue =
-                        search.value.toLowerCase();
-
-                    rows.forEach(row => {
-
-                        const text =
-                            row.innerText.toLowerCase();
-
-                        if (
-                            text.includes(searchValue)
-                        ) {
-
-                            row.style.display = '';
-
-                        }
-                        else {
-
-                            row.style.display = 'none';
-
-                        }
-
-                    });
-
-                }
-
-                search.addEventListener(
-                    'keyup',
-                    filterTable
-                );
-
-            }
-        );
-
-    </script>
 @endsection

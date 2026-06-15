@@ -122,30 +122,29 @@
 
                     </label>
 
-                    <input type="text" name="campaign" class="w-full border rounded-2xl px-5 py-4">
+                    <select name="campaign_id" class="w-full border rounded-2xl px-5 py-4">
+
+                        <option value="">
+                            No Campaign
+                        </option>
+
+                        @foreach($campaigns as $campaign)
+
+                            <option value="{{ $campaign->id }}">
+
+                                {{ $campaign->name }}
+
+                            </option>
+
+                        @endforeach
+
+                    </select>
 
                 </div>
 
             </div>
             <div>
 
-                <label class="block mb-2 font-semibold">
-
-                    Notification Status
-
-                </label>
-
-                <select name="status" class="w-full border rounded-2xl px-5 py-4">
-
-                    <option>Draft</option>
-
-                    <option>Sent</option>
-
-                    <option>Delivered</option>
-
-                    <option>Failed</option>
-
-                </select>
 
             </div>
 

@@ -19,6 +19,24 @@
             <input type="text" name="campaign_name" value="{{ $campaign->name }}" class="border w-full p-2 rounded mb-4">
 
             <label class="block mb-2">
+                Campaign Type
+            </label>
+
+            <select name="campaign_type" class="border w-full p-2 rounded mb-4">
+
+                @foreach($campaignTypes as $type)
+
+                    <option value="{{ $type->name }}" {{ $campaign->type == $type->name ? 'selected' : '' }}>
+
+                        {{ $type->name }}
+
+                    </option>
+
+                @endforeach
+
+            </select>
+
+            <label class="block mb-2">
                 Location
             </label>
 
@@ -41,7 +59,32 @@
 
             <input type="text" id="fundingTarget" name="funding_target"
                 value="{{ number_format((float) $campaign['target'], 2) }}" class="border w-full p-2 rounded mb-4">
+            <label class="block mb-2">
+                Required Skills
+            </label>
 
+            <select name="skills[]" multiple class="border w-full p-2 rounded mb-4" size="6">
+
+                @foreach($skills as $skill)
+
+                    <option value="{{ $skill->id }}" @if(
+                        in_array(
+                            $skill->id,
+                            $selectedSkillIds
+                        )
+                    ) selected @endif>
+
+                        {{ $skill->name }}
+
+                    </option>
+
+                @endforeach
+
+            </select>
+
+            <p class="text-xs text-gray-500 mb-4">
+                Hold CTRL to select multiple skills.
+            </p>
             <label class="block mb-2">
                 Description
             </label>

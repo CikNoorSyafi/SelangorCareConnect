@@ -33,6 +33,24 @@
 <body class="bg-gray-50 font-sans">
 
     <!-- HEADER (STANDARDIZED FOR ALL PAGES) -->
+    @php
+
+        $unreadCount = 0;
+
+        if (session('user')) {
+
+            $unreadCount = \App\Models\UserNotification::where(
+                'user_id',
+                session('user.id')
+            )
+                ->where(
+                    'is_read',
+                    false
+                )
+                ->count();
+        }
+
+    @endphp
     <header
         class="fixed top-0 left-0 w-full z-50 h-16 flex justify-between items-center px-8 bg-white border-b border-gray-100 shadow-sm">
 
@@ -45,7 +63,28 @@
                 <p class="text-xs text-gray-500">Official Community Portal</p>
             </div>
         </div>
+        <div class="flex items-center gap-4">
 
+            <a href="/donor/notifications" class="relative flex items-center">
+
+                <span class="material-symbols-outlined text-3xl text-gray-600">
+                    notifications
+                </span>
+
+                @if($unreadCount > 0)
+
+                    <span
+                        class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center">
+
+                        {{ $unreadCount }}
+
+                    </span>
+
+                @endif
+
+            </a>
+
+        </div>
     </header>
 
     <div class="flex h-[calc(100vh-64px)] mt-16">
@@ -71,13 +110,8 @@
                     Donation History
                 </a>
 
-                <a href="/donor/receipts" class="block px-3 py-2 rounded
-        {{ request()->is('donor/receipts*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Tax Receipts
-                </a>
-
-                <a href="/donor/profile" class="block px-3 py-2 rounded
-        {{ request()->is('donor/profile*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+                <a href="/profile" class="block px-3 py-2 rounded
+        {{ request()->is('/profile*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
                     My Profile
                 </a>
 

@@ -11,14 +11,14 @@
             </h1>
 
             <p class="text-gray-500 mb-6">
-                {{ $campaign['title'] }}
+                {{ $campaign->name }}
             </p>
 
             <form method="POST" action="{{ route('volunteer.apply') }}">
 
                 @csrf
+                <input type="hidden" name="campaign_id" value="{{ $campaign->id }}">
 
-                <input type="hidden" name="campaign" value="{{ $campaign['title'] }}">
 
                 <div class="mb-6">
 
@@ -28,24 +28,16 @@
 
                     <div class="grid md:grid-cols-2 gap-4">
 
-                        @foreach($campaign['shifts'] as $shift)
+                        @foreach($shifts as $shift)
 
                             <label class="border rounded-lg p-4 cursor-pointer">
 
-                                <input type="radio" name="shift" value="{{ $shift['name'] }}" required>
+                                <input type="radio" name="shift" value="{{ $shift->name }}" required>
 
                                 <div class="mt-2">
 
                                     <div class="font-semibold">
-                                        {{ $shift['name'] }}
-                                    </div>
-
-                                    <div class="text-sm text-gray-500">
-                                        {{ $shift['time'] }}
-                                    </div>
-
-                                    <div class="text-green-600 text-sm">
-                                        {{ $shift['remaining'] }} slots remaining
+                                        {{ $shift->name }}
                                     </div>
 
                                 </div>
@@ -69,10 +61,10 @@
                             Select Skill
                         </option>
 
-                        @foreach($campaign['skills'] as $skill)
+                        @foreach($skills as $skill)
 
-                            <option value="{{ $skill }}">
-                                {{ $skill }}
+                            <option value="{{ $skill->skill->name }}">
+                                {{ $skill->skill->name }}
                             </option>
 
                         @endforeach

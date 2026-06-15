@@ -127,7 +127,7 @@
             </td>
 
             <td>
-                {{ session('campaign_name') }}
+                {{ $campaign }}
             </td>
 
         </tr>

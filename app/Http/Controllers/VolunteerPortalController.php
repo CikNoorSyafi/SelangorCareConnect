@@ -3,137 +3,109 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Campaign;
+use App\Models\VolunteerApplication;
+use App\Models\Attendance;
+use App\Models\CampaignSkill;
+use Illuminate\Support\Facades\Auth;
+
 
 class VolunteerPortalController extends Controller
 {
     public function application($id)
     {
-        $campaigns = [
+        $campaign = Campaign::findOrFail($id);
 
-            [
-                'id' => 1,
-                'title' => 'Sungai Klang Rehabilitation',
-                'category' => 'Environment',
-                'location' => 'Gombak',
-                'date' => '22 Oct 2026',
+        $skills = CampaignSkill::where(
+            'campaign_id',
+            $id
+        )
+            ->with('skill')
+            ->get();
 
-                'shifts' => [
+        $shifts = \App\Models\Shift::where(
+            'status',
+            'Active'
+        )->get();
 
-                    [
-                        'name' => 'Morning Shift (Slot A)',
-                        'time' => '08:00 AM - 12:00 PM',
-                        'remaining' => 5
-                    ],
+        $existingApplication =
+            VolunteerApplication::where(
+                'campaign_id',
+                $id
+            )
+                ->where(
+                    'user_id',
+                    session('user.id')
+                )
+                ->first();
 
-                    [
-                        'name' => 'Afternoon Shift (Slot B)',
-                        'time' => '01:00 PM - 05:00 PM',
-                        'remaining' => 2
-                    ],
+        if ($existingApplication) {
 
-                    [
-                        'name' => 'Full Day (Slot C)',
-                        'time' => '08:00 AM - 05:00 PM',
-                        'remaining' => 10
-                    ]
-
-                ],
-
-                'skills' => [
-
-                    'General Volunteer',
-                    'First Aid',
-                    'Environmental Cleanup',
-                    'Logistics Handling'
-
-                ]
-            ]
-
-        ];
-
-        $campaign = collect($campaigns)
-            ->firstWhere('id', (int) $id);
-
-        if (!$campaign) {
-            abort(404);
+            return redirect()
+                ->route('volunteer.applications')
+                ->with(
+                    'error',
+                    'You have already applied for this campaign.'
+                );
         }
 
         return view(
             'volunteer.application',
-            compact('campaign')
-        );
-    }
-    public function opportunities()
-    {
-        $campaigns = [
-
-            [
-                'id' => 1,
-                'title' => 'Sungai Klang Rehabilitation',
-                'category' => 'Environment',
-                'location' => 'Gombak',
-                'date' => '22 Oct 2026'
-            ],
-
-            [
-                'id' => 2,
-                'title' => 'Food Aid Distribution',
-                'category' => 'Welfare',
-                'location' => 'Petaling Jaya',
-                'date' => '28 Oct 2026'
-            ]
-
-        ];
-
-        $applications = session('applications', []);
-
-        return view(
-            'volunteer.opportunities',
             compact(
-                'campaigns',
-                'applications'
+                'campaign',
+                'skills',
+                'shifts'
             )
         );
     }
 
     public function apply(Request $request)
     {
-        $applications =
-            session(
-                'volunteer_applications',
-                []
-            );
+        $request->validate([
 
-        $applications[] = [
+            'campaign_id' => 'required',
+            'shift' => 'required',
+            'skill' => 'required',
 
-            'id' =>
-                'VOL-' .
-                rand(1000, 9999),
+        ]);
+        $existingApplication =
+            VolunteerApplication::where(
+                'user_id',
+                session('user.id')
+            )
+                ->where(
+                    'campaign_id',
+                    $request->campaign_id
+                )
+                ->whereNotIn(
+                    'status',
+                    ['Withdrawn']
+                )
+                ->first();
 
-            'campaign' =>
-                $request->campaign,
+        if ($existingApplication) {
 
-            'shift' =>
-                $request->shift,
+            return back()
+                ->with(
+                    'error',
+                    'You have already applied for this campaign.'
+                );
+        }
+
+        VolunteerApplication::create([
+
+            'user_id' => session('user.id'),
+
+            'campaign_id' => $request->campaign_id,
+
+            'shift' => $request->shift,
 
             'skill' => $request->skill,
-            'notes' =>
-                $request->notes,
 
-            'status' =>
-                'Under Review',
+            'notes' => $request->notes,
 
-            'date' =>
-                now()->format('d M Y'),
+            'status' => 'Pending'
 
-            'submitted_at' =>
-                now()->format('d M Y H:i')
-
-        ];
-
-        session([
-            'volunteer_applications' =>
-                $applications
         ]);
 
         return redirect()
@@ -142,107 +114,193 @@ class VolunteerPortalController extends Controller
     public function applications()
     {
         $applications =
-            session(
-                'volunteer_applications',
-                []
-            );
+            VolunteerApplication::with('campaign')
+                ->where(
+                    'user_id',
+                    session('user.id')
+                )
+                ->latest()
+                ->get();
 
         return view(
             'volunteer.applications',
-            compact(
-                'applications'
-            )
+            compact('applications')
         );
     }
 
     public function applicationSuccess()
     {
-        $applications = session(
-            'volunteer_applications',
-            []
-        );
-
-        $application = end($applications);
+        $application =
+            VolunteerApplication::with('campaign')
+                ->where(
+                    'user_id',
+                    session('user.id')
+                )
+                ->latest()
+                ->first();
 
         return view(
             'volunteer.application-success',
             compact('application')
         );
     }
-
     public function withdraw($id)
     {
-        $applications =
-            session(
-                'volunteer_applications',
-                []
-            );
+        $application =
+            VolunteerApplication::where(
+                'user_id',
+                session('user.id')
+            )
+                ->findOrFail($id);
 
-        foreach ($applications as $index => $application) {
-
-            if ($application['id'] == $id) {
-
-                $applications[$index]['status'] =
-                    'Withdrawn';
-
-                break;
-            }
-        }
-
-        session([
-            'volunteer_applications' =>
-                $applications
+        $application->update([
+            'status' => 'Withdrawn'
         ]);
 
         return redirect()
             ->back()
             ->with(
                 'success',
-                'Your volunteer application has been withdrawn successfully.'
+                'Application withdrawn successfully.'
             );
     }
     public function dashboard()
     {
-        $campaigns = [
 
-            [
-                'id' => 1,
-                'title' => 'Sungai Klang Rehabilitation',
-                'category' => 'Environment',
-                'location' => 'Gombak',
-                'date' => '22 Oct 2026'
-            ],
+        $userId = session('user.id');
 
-            [
-                'id' => 2,
-                'title' => 'Food Aid Distribution',
-                'category' => 'Welfare',
-                'location' => 'Petaling Jaya',
-                'date' => '28 Oct 2026'
-            ]
+        $totalApplications =
+            VolunteerApplication::where(
+                'user_id',
+                $userId
+            )->count();
 
-        ];
+        $approved =
+            VolunteerApplication::where(
+                'user_id',
+                $userId
+            )
+                ->where(
+                    'status',
+                    'Approved'
+                )
+                ->count();
+
+        $pending =
+            VolunteerApplication::where(
+                'user_id',
+                $userId
+            )
+                ->where(
+                    'status',
+                    'Pending'
+                )
+                ->count();
+
+        $hours = 0;
+
+        $activeApplications =
+            VolunteerApplication::with(
+                'campaign'
+            )
+                ->where(
+                    'user_id',
+                    $userId
+                )
+                ->whereIn(
+                    'status',
+                    ['Pending', 'Approved']
+                )
+                ->get();
+
+        $appliedCampaignIds =
+            VolunteerApplication::where(
+                'user_id',
+                $userId
+            )
+                ->pluck('campaign_id');
+
+        $campaigns =
+            Campaign::where(
+                'status',
+                'Approved'
+            )
+                ->whereNotIn(
+                    'id',
+                    $appliedCampaignIds
+                )
+                ->latest()
+                ->get();
 
         return view(
             'volunteer.dashboard',
-            compact('campaigns')
+            compact(
+                'totalApplications',
+                'approved',
+                'pending',
+                'hours',
+                'activeApplications',
+                'campaigns'
+            )
         );
     }
+
 
     public function history()
     {
         $applications =
-            session(
-                'volunteer_applications',
-                []
-            );
+            VolunteerApplication::with('campaign')
+                ->where(
+                    'user_id',
+                    session('user.id')
+                )
+                ->where(
+                    'status',
+                    'Approved'
+                )
+                ->latest()
+                ->get();
 
         return view(
             'volunteer.history',
             compact('applications')
         );
     }
+    public function viewApplication($id)
+    {
+        $application =
+            VolunteerApplication::with('campaign')
+                ->where(
+                    'user_id',
+                    session('user.id')
+                )
+                ->findOrFail($id);
 
+        return view(
+            'volunteer.application-view',
+            compact('application')
+        );
+    }
+    public function assignments()
+    {
+        $assignments =
+            VolunteerApplication::with('campaign')
+                ->where(
+                    'user_id',
+                    session('user.id')
+                )
+                ->where(
+                    'status',
+                    'Approved'
+                )
+                ->latest()
+                ->get();
+
+        return view(
+            'volunteer.assignments',
+            compact('assignments')
+        );
+    }
     public function attendance()
     {
         $attendance = [

@@ -1,4 +1,4 @@
-@extends('layouts.organizer')
+@extends('layouts.' . session('user.role'))
 
 @section('content')
 
@@ -37,37 +37,46 @@
                 <div>
                     <p class="text-gray-400 mb-1">Full Name</p>
                     <h3 class="text-xl font-bold">
-                        {{ $profile['name'] }}
+                        {{ $user->name }}
                     </h3>
                 </div>
 
                 <div>
                     <p class="text-gray-400 mb-1">Email Address</p>
                     <h3 class="text-xl font-bold">
-                        {{ $profile['email'] }}
+                        {{ $user->email }}
                     </h3>
                 </div>
 
                 <div>
                     <p class="text-gray-400 mb-1">Phone Number</p>
                     <h3 class="text-xl font-bold">
-                        {{ $profile['phone'] }}
+                        {{ $user->phone }}
                     </h3>
                 </div>
 
                 <div>
                     <p class="text-gray-400 mb-1">Role</p>
                     <h3 class="text-xl font-bold">
-                        {{ $profile['role'] }}
+                        {{ $user->role }}
                     </h3>
                 </div>
 
-                <div>
-                    <p class="text-gray-400 mb-1">Organization</p>
-                    <h3 class="text-xl font-bold">
-                        {{ $profile['organization'] }}
-                    </h3>
-                </div>
+                @if(session('user.role') == 'organizer')
+
+                    <div>
+
+                        <p class="text-sm text-gray-400">
+                            Organization
+                        </p>
+
+                        <h3 class="text-xl font-bold mt-1">
+                            {{ $user->organization }}
+                        </h3>
+
+                    </div>
+
+                @endif
 
             </div>
 
@@ -82,33 +91,57 @@
 
             <div class="space-y-4">
 
-                <div class="flex justify-between">
-                    <span>Campaign Notifications</span>
-                    <span>
-                        {{ $profile['campaign_notifications'] ? 'Enabled' : 'Disabled' }}
-                    </span>
-                </div>
+                {{-- ORGANIZER --}}
+                @if(session('user.role') == 'organizer')
 
-                <div class="flex justify-between">
-                    <span>Volunteer Notifications</span>
-                    <span>
-                        {{ $profile['volunteer_notifications'] ? 'Enabled' : 'Disabled' }}
-                    </span>
-                </div>
+                    <div class="flex justify-between py-2">
+                        <span>Campaign Notifications</span>
+                        <span>{{ $user->campaign_notifications ? 'Enabled' : 'Disabled' }}</span>
+                    </div>
 
-                <div class="flex justify-between">
-                    <span>Donation Notifications</span>
-                    <span>
-                        {{ $profile['donation_notifications'] ? 'Enabled' : 'Disabled' }}
-                    </span>
-                </div>
+                    <div class="flex justify-between py-2">
+                        <span>Volunteer Notifications</span>
+                        <span>{{ $user->volunteer_notifications ? 'Enabled' : 'Disabled' }}</span>
+                    </div>
 
-                <div class="flex justify-between">
-                    <span>Communication Notifications</span>
-                    <span>
-                        {{ $profile['communication_notifications'] ? 'Enabled' : 'Disabled' }}
-                    </span>
-                </div>
+                    <div class="flex justify-between py-2">
+                        <span>Communication Notifications</span>
+                        <span>{{ $user->communication_notifications ? 'Enabled' : 'Disabled' }}</span>
+                    </div>
+
+                @endif
+
+
+                {{-- DONOR --}}
+                @if(session('user.role') == 'donor')
+
+                    <div class="flex justify-between py-2">
+                        <span>Donation Notifications</span>
+                        <span>{{ $user->donation_notifications ? 'Enabled' : 'Disabled' }}</span>
+                    </div>
+
+                    <div class="flex justify-between py-2">
+                        <span>Communication Notifications</span>
+                        <span>{{ $user->communication_notifications ? 'Enabled' : 'Disabled' }}</span>
+                    </div>
+
+                @endif
+
+
+                {{-- VOLUNTEER --}}
+                @if(session('user.role') == 'volunteer')
+
+                    <div class="flex justify-between py-2">
+                        <span>Campaign Notifications</span>
+                        <span>{{ $user->campaign_notifications ? 'Enabled' : 'Disabled' }}</span>
+                    </div>
+
+                    <div class="flex justify-between py-2">
+                        <span>Volunteer Notifications</span>
+                        <span>{{ $user->volunteer_notifications ? 'Enabled' : 'Disabled' }}</span>
+                    </div>
+
+                @endif
 
             </div>
 

@@ -86,6 +86,8 @@
 
                         <th class="text-left px-6 py-5">Recipients</th>
 
+                        <th class="text-left px-6 py-5">Read</th>
+
                         <th class="text-left px-6 py-5">Status</th>
 
                     </tr>
@@ -101,7 +103,7 @@
                             <!-- DATE -->
                             <td class="px-6 py-5">
 
-                                {{ $notification['date'] }}
+                                {{ $notification->created_at->format('d M Y') }}
 
                             </td>
 
@@ -109,11 +111,11 @@
                             <td class="px-6 py-5">
 
                                 <p class="font-bold">
-                                    {{ $notification['title'] }}
+                                    {{ $notification->title }}
                                 </p>
 
                                 <p class="text-gray-500 text-sm mt-1">
-                                    {{ $notification['message'] }}
+                                    {{ $notification->message }}
                                 </p>
 
                             </td>
@@ -121,7 +123,7 @@
                             <!-- TYPE -->
                             <td class="px-6 py-5">
 
-                                @if($notification['type'] == 'System')
+                                @if($notification->type == 'System')
 
                                     <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
 
@@ -144,28 +146,31 @@
                             <!-- AUDIENCE -->
                             <td class="px-6 py-5">
 
-                                {{ $notification['audience'] }}
+                                {{ $notification->audience }}
 
                             </td>
 
                             <!-- CAMPAIGN -->
                             <td class="px-6 py-5">
 
-                                {{ $notification['campaign'] }}
+                                {{ $notification->campaign->name ?? 'General Announcement' }}
 
                             </td>
 
                             <!-- RECIPIENTS -->
                             <td class="px-6 py-5">
 
-                                {{ $notification['recipients'] ?? 0 }}
+                                {{ $notification->recipients ?? 0 }}
 
                             </td>
-
-                            <!-- STATUS -->
+                            <!-- READ -->
                             <td class="px-6 py-5">
 
-                                @if($notification['status'] == 'Delivered')
+                                {{ $notification->read_count }}/{{ $notification->recipient_count }}
+                                <!-- STATUS -->
+                            <td class="px-6 py-5">
+
+                                @if($notification->status == 'Delivered')
 
                                     <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
 
@@ -173,7 +178,7 @@
 
                                     </span>
 
-                                @elseif($notification['status'] == 'Sent')
+                                @elseif($notification->status == 'Sent')
 
                                     <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
 
@@ -181,7 +186,7 @@
 
                                     </span>
 
-                                @elseif($notification['status'] == 'Failed')
+                                @elseif($notification->status == 'Failed')
 
                                     <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-semibold">
 

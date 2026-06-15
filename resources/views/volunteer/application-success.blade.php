@@ -44,7 +44,7 @@
                             </span>
 
                             <p class="text-sm text-gray-500">
-                                {{ $application['submitted_at'] }}
+                                {{ $application->created_at?->format('d M Y h:i A') }}
                             </p>
                         </div>
 
@@ -61,7 +61,6 @@
                     </div>
 
                 </div>
-
                 <div class="bg-gray-50 rounded-lg p-6">
 
                     <h3 class="font-bold mb-4">
@@ -70,22 +69,27 @@
 
                     <p>
                         <strong>ID:</strong>
-                        {{ $application['id'] }}
+                        {{ $application->id }}
                     </p>
 
                     <p>
                         <strong>Campaign:</strong>
-                        {{ $application['campaign'] }}
+                        {{ $application->campaign->name ?? 'N/A' }}
                     </p>
 
                     <p>
                         <strong>Shift:</strong>
-                        {{ $application['shift'] }}
+                        {{ $application->shift }}
+                    </p>
+
+                    <p>
+                        <strong>Skill:</strong>
+                        {{ $application->skill }}
                     </p>
 
                     <p>
                         <strong>Status:</strong>
-                        {{ $application['status'] }}
+                        {{ $application->status }}
                     </p>
 
                 </div>
@@ -94,9 +98,9 @@
 
             <div class="flex justify-center gap-4 mt-10">
 
-                <a href="/volunteer/opportunities" class="border px-6 py-3 rounded-lg">
+                <a href="{{ route('volunteer.dashboard') }}" class="border px-6 py-3 rounded-lg">
 
-                    Return to Opportunities
+                    Return to Dashboard
 
                 </a>
 

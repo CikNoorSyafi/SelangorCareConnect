@@ -4,9 +4,9 @@
 
     @php
 
-        $status = session('payment_status', 'SUCCESS');
-
-        $isSuccess = $status == 'SUCCESS';
+        $isSuccess =
+            strtolower($donation->status)
+            == 'allocated';
 
     @endphp
 
@@ -77,7 +77,7 @@
                     </p>
 
                     <h2 class="text-4xl font-black mt-2">
-                        RM {{ number_format(session('payment_amount', 0), 2) }}
+                        RM {{ number_format($donation->amount, 2) }}
                     </h2>
 
                 </div>
@@ -113,7 +113,7 @@
                     </p>
 
                     <p class="font-semibold mt-1">
-                        {{ session('campaign_name') }}
+                        {{ $donation->campaign_type }}
                     </p>
 
                 </div>
@@ -125,7 +125,7 @@
                     </p>
 
                     <p class="font-semibold mt-1">
-                        {{ session('payment_reference') }}
+                        {{ $donation->transaction_id }}
                     </p>
 
                 </div>
@@ -137,7 +137,7 @@
                     </p>
 
                     <p class="font-semibold mt-1">
-                        {{ session('payment_datetime')->format('d M Y h:i A') }}
+                        {{ $donation->created_at->timezone('Asia/Kuala_Lumpur')->format('d M Y h:i A') }}
                     </p>
 
                 </div>
@@ -151,7 +151,7 @@
 
 
                     <p class="font-semibold mt-1">
-                        {{ session('payment_method') }}
+                        {{ $donation->payment_method }}
                     </p>
 
 
@@ -182,7 +182,7 @@
 
             @if($isSuccess)
 
-                <a href="/donor/download-receipt" class="bg-red-500 text-white px-6 py-3 rounded-xl">
+                <a href="/donor/download-receipt/{{ $donation->id }}" class="bg-red-500 text-white px-6 py-3 rounded-xl">
 
                     Download Receipt
 

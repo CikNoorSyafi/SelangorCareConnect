@@ -70,7 +70,7 @@
                         Campaign Name
                     </label>
 
-                    <input name="campaign_name" type="text" placeholder="Enter campaign name"
+                    <input name="campaign_name" required type="text" placeholder="Enter campaign name"
                         class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm">
 
                 </div>
@@ -82,31 +82,20 @@
                         Campaign Type
                     </label>
 
-                    <select name="campaign_type" class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm">
+                    <select name="campaign_type" required
+                        class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm">
 
-                        <option selected disabled>
+                        <option value="" selected disabled>
                             Select Campaign Type
                         </option>
 
-                        <option>
-                            Disaster Relief
-                        </option>
+                        @foreach($campaignTypes as $type)
 
-                        <option>
-                            Education
-                        </option>
+                            <option value="{{ $type->name }}">
+                                {{ $type->name }}
+                            </option>
 
-                        <option>
-                            Medical Support
-                        </option>
-
-                        <option>
-                            Welfare Management
-                        </option>
-
-                        <option>
-                            Community Development
-                        </option>
+                        @endforeach
 
                     </select>
 
@@ -125,7 +114,7 @@
                         Location
                     </label>
 
-                    <input type="text" name="location" list="selangor-locations" placeholder="Type location..."
+                    <input type="text" name="location" required list="selangor-locations" placeholder="Type location..."
                         class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm">
                     <datalist id="selangor-locations">
 
@@ -146,7 +135,7 @@
                         Funding Target (RM)
                     </label>
 
-                    <input name="funding_target" type="text" id="fundingTarget" placeholder="0.00" maxlength="13"
+                    <input name="funding_target" required type="text" id="fundingTarget" placeholder="0.00" maxlength="13"
                         class="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm">
 
                 </div>
@@ -467,7 +456,7 @@
                         @for($i = 1; $i <= $campaigns->lastPage(); $i++)
 
                                 <a href="{{ $campaigns->url($i) }}" class="px-3 py-1 border rounded
-                                                                                                                                                                                                                                                                                                                                                                                                                                               {{ $campaigns->currentPage() == $i
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               {{ $campaigns->currentPage() == $i
                             ? 'bg-red-500 text-white'
                             : 'bg-white' }}">
 
@@ -535,6 +524,20 @@
 
             }
         });
+
+        document.querySelector('form')
+            .addEventListener(
+                'keydown',
+                function (e) {
+
+                    if (e.key === 'Enter') {
+
+                        e.preventDefault();
+
+                    }
+
+                }
+            );
 
     </script>
 

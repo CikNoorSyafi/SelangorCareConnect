@@ -46,6 +46,24 @@
             </div>
         </div>
 
+        <!-- Notification Bell -->
+        <div class="flex items-center gap-4">
+
+            <a href="#" class="relative">
+
+                <span class="material-symbols-outlined text-3xl text-gray-600 hover:text-red-500">
+                    notifications
+                </span>
+
+                <span
+                    class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center">
+                    0
+                </span>
+
+            </a>
+
+        </div>
+
     </header>
 
     <div class="flex h-[calc(100vh-64px)] mt-16">
@@ -63,14 +81,15 @@
                         Dashboard
                     </a>
 
-                    <a href="{{ route('volunteer.opportunities') }}" class="block px-3 py-2 rounded
-        {{ request()->is('volunteer/opportunities*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                        Opportunities
-                    </a>
-
                     <a href="{{ route('volunteer.applications') }}" class="block px-3 py-2 rounded
         {{ request()->is('volunteer/applications*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
                         My Applications
+                    </a>
+                    <a href="{{ route('volunteer.assignments') }}" class="block px-3 py-2 rounded
+   {{ request()->is('volunteer/assignments*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+
+                        My Assignments
+
                     </a>
 
                     <a href="{{ route('volunteer.history') }}" class="block px-3 py-2 rounded
@@ -83,8 +102,8 @@
                         Attendance
                     </a>
 
-                    <a href="{{ route('volunteer.profile') }}" class="block px-3 py-2 rounded
-        {{ request()->is('volunteer/profile*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+                    <a href="{{ url('/profile') }}" class="block px-3 py-2 rounded
+{{ request()->is('profile*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
                         My Profile
                     </a>
 
