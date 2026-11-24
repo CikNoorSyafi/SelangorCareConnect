@@ -7,13 +7,15 @@
         <div class="flex justify-between items-center mb-8">
 
             <div>
+
                 <h1 class="text-5xl font-extrabold">
                     My Assignments
                 </h1>
 
                 <p class="text-gray-500 mt-2">
-                    View your approved volunteer assignments.
+                    View campaign assignments assigned by organizers.
                 </p>
+
             </div>
 
             <a href="{{ route('volunteer.dashboard') }}"
@@ -31,10 +33,10 @@
 
                 <tr>
                     <th class="p-4 text-left">Campaign</th>
-                    <th class="p-4 text-left">Date</th>
+                    <th class="p-4 text-left">Location</th>
+                    <th class="p-4 text-left">Role</th>
                     <th class="p-4 text-left">Shift</th>
-                    <th class="p-4 text-left">Skill</th>
-                    <th class="p-4 text-left">Status</th>
+                    <th class="p-4 text-left">Date</th>
                 </tr>
 
             </thead>
@@ -50,24 +52,28 @@
                         </td>
 
                         <td class="p-4">
-                            {{ \Carbon\Carbon::parse($assignment->campaign->start_date)->format('d M Y') }}
+                            {{ $assignment->campaign->location ?? 'N/A' }}
                         </td>
 
                         <td class="p-4">
-                            {{ $assignment->shift }}
+                            {{ $assignment->role->name ?? 'N/A' }}
                         </td>
 
                         <td class="p-4">
-                            {{ $assignment->skill }}
+                            {{ $assignment->shift->name ?? 'N/A' }}
                         </td>
 
                         <td class="p-4">
 
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                            @if($assignment->campaign)
 
-                                Assigned
+                                {{ \Carbon\Carbon::parse($assignment->campaign->start_date)->format('d M Y') }}
 
-                            </span>
+                            @else
+
+                                N/A
+
+                            @endif
 
                         </td>
 
@@ -79,7 +85,7 @@
 
                         <td colspan="5" class="text-center p-8 text-gray-500">
 
-                            No assignments available.
+                            No assignments found.
 
                         </td>
 

@@ -1,0 +1,28 @@
+Merge these route changes into the EXISTING routes/web.php. Do not replace the whole routes/web.php file.
+
+1) Inside the existing role:organizer group, replace the existing communication view route with:
+
+Route::get('/communication/view/{id}', [CommunicationController::class, 'show'])
+    ->name('communication.show');
+
+2) Inside the existing role:donor group, replace the current POST route closure for
+   /donor/notifications/{id}/read with:
+
+Route::post('/donor/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+
+3) Inside the existing role:volunteer group, replace the current GET route closure for
+   /volunteer/notifications with:
+
+Route::get('/volunteer/notifications', [NotificationController::class, 'volunteerIndex']);
+
+Then add this POST route inside the same role:volunteer group:
+
+Route::post('/volunteer/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+
+4) Keep the existing /notifications/{id}/read route for any existing Organizer notification page.
+   The NotificationController now verifies user_id before changing a receipt, so a user cannot
+   mark another user's notification as read by changing the URL.
+
+5) Ensure routes/web.php already has this import (it should in the current project):
+
+use App\Http\Controllers\NotificationController;

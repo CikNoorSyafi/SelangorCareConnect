@@ -31,11 +31,6 @@
                     <div class="space-y-3">
 
                         <p>
-                            <strong>Application ID:</strong>
-                            {{ $application->id }}
-                        </p>
-
-                        <p>
                             <strong>Applied Date:</strong>
                             {{ $application->created_at?->format('d M Y h:i A') }}
                         </p>

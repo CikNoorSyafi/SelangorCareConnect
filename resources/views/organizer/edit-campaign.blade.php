@@ -37,28 +37,26 @@
             </select>
 
             <label class="block mb-2">
-                Location
+                Selangor District
             </label>
 
-            <input type="text" name="location" value="{{ $campaign->location }}" list="selangor-locations"
-                class="border w-full p-2 rounded mb-4">
-
-            <datalist id="selangor-locations">
-
-                @foreach($locations as $location)
-
-                    <option value="{{ $location }}">
-
+            <select id="campaign-location" name="location" required class="border w-full p-2 rounded mb-4">
+                <option value="">Select district</option>
+                @foreach($districts as $district)
+                    <option value="{{ $district }}" {{ old('location', $selectedDistrict) === $district ? 'selected' : '' }}>
+                        {{ $district }}
+                    </option>
                 @endforeach
-
-            </datalist>
+            </select>
+            <p class="mb-3 text-xs text-gray-500">Choose the administrative district where the programme takes place. Selayang is in Gombak. Shah Alam areas may fall under Petaling or Klang, so select the correct district.</p>
+            @error('location') <p class="mb-3 text-sm text-red-600">{{ $message }}</p> @enderror
 
             <label class="block mb-2">
                 Funding Target
             </label>
 
-            <input type="text" id="fundingTarget" name="funding_target"
-                value="{{ number_format((float) $campaign['target'], 2) }}" class="border w-full p-2 rounded mb-4">
+            <input type="number" id="fundingTarget" name="funding_target" min="0" step="0.01"
+                value="{{ old('funding_target', $campaign->target) }}" class="border w-full p-2 rounded mb-4">
             <label class="block mb-2">
                 Required Skills
             </label>
@@ -142,9 +140,6 @@
 
                                             {{ $v->name }}
 
-                                            <span class="text-gray-500 text-xs">
-                                                (ID: {{ $v->id }})
-                                            </span>
 
                                         </span>
 
@@ -217,42 +212,6 @@
 
 
     <script>
-
-        const fundingInput = document.getElementById('fundingTarget');
-
-        fundingInput.addEventListener('input', function (e) {
-
-            let value = e.target.value;
-
-            value = value.replace(/[^0-9.]/g, '');
-
-            const parts = value.split('.');
-
-            if (parts.length > 2) {
-                value = parts[0] + '.' + parts[1];
-            }
-
-            if (parts[1]) {
-                parts[1] = parts[1].substring(0, 2);
-                value = parts[0] + '.' + parts[1];
-            }
-
-            e.target.value = value;
-
-        });
-
-        fundingInput.addEventListener('blur', function (e) {
-
-            let value = parseFloat(e.target.value);
-
-            if (!isNaN(value)) {
-                e.target.value = value.toLocaleString('en-MY', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-            }
-
-        });
 
     </script>
 @endsection

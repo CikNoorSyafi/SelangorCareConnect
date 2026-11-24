@@ -22,7 +22,7 @@
                 </h1>
 
                 <p class="text-gray-500 mt-2 text-lg">
-                    Monitor collections and fund allocation across campaigns.
+                    Monitor donations and collections for your campaigns.
                 </p>
             </div>
 
@@ -71,9 +71,6 @@
 
                     </div>
 
-                    <span class="text-green-600 font-bold text-sm">
-                        +12.5%
-                    </span>
 
                 </div>
 
@@ -82,7 +79,7 @@
                 </p>
 
                 <h2 class="text-4xl font-black mt-2">
-                    {{ $totalCollections }}
+                    RM {{ number_format((float) $totalCollections, 2) }}
                 </h2>
 
             </a>
@@ -99,27 +96,37 @@
 
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3
-                                                                                                                                                3-1.343 3-3-1.343-3-3-3z" />
+                                                                                                                                                            3-1.343 3-3-1.343-3-3-3z" />
                         </svg>
 
                     </div>
 
-                    <span class="text-gray-400 font-bold text-sm">
-                        85% of total
-                    </span>
 
                 </div>
 
                 <p class="text-gray-500 mt-6 text-sm font-semibold uppercase">
-                    Total Allocated
+                    Allocated Transactions
                 </p>
 
                 <h2 class="text-4xl font-black mt-2">
-                    {{ $totalAllocated }}
+                    {{ number_format($totalAllocated) }}
                 </h2>
 
             </div>
 
+
+            <!-- PENDING PAYMENTS -->
+            <div class="bg-white border rounded-2xl p-6 hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div class="p-3 rounded-xl bg-amber-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-gray-500 mt-6 text-sm font-semibold uppercase">Pending Payments</p>
+                <h2 class="text-4xl font-black mt-2">{{ number_format($pendingVerifications) }}</h2>
+            </div>
 
             <!-- CONTRIBUTORS -->
             <div class="bg-white border rounded-2xl p-6 hover:shadow-md transition">
@@ -136,9 +143,6 @@
 
                     </div>
 
-                    <span class="text-purple-600 font-bold text-sm">
-                        +156 this month
-                    </span>
 
                 </div>
 
@@ -166,7 +170,7 @@
                     <div class="relative w-full md:w-96">
 
                         <input type="text" name="search" value="{{ request('search') }}"
-                            placeholder="Filter by name, ID, or campaign..."
+                            placeholder="Search contributor or campaign..."
                             class="w-full border rounded-xl pl-4 pr-4 py-3 focus:ring-2 focus:ring-red-200 focus:outline-none">
 
                     </div>
@@ -184,6 +188,9 @@
 
                         <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>
                             Pending
+                        </option>
+                        <option value="Failed" {{ request('status') == 'Failed' ? 'selected' : '' }}>
+                            Failed
                         </option>
 
                     </select>
@@ -203,7 +210,7 @@
                 </form>
 
                 <div class="text-sm text-gray-500 whitespace-nowrap">
-                    Showing {{ count($donations) }} records
+                    Showing {{ $donations->total() }} records
                 </div>
 
             </div>
@@ -247,14 +254,11 @@
                                         {{ $donation['contributor'] }}
                                     </div>
 
-                                    <div class="text-xs text-gray-400 mt-1">
-                                        {{ $donation['transaction_id'] }}
-                                    </div>
 
                                 </td>
 
                                 <td class="px-6 py-5">
-                                    {{ $donation->campaign->name ?? 'Community Fund' }}
+                                    {{ $donation->campaign->name }}
                                 </td>
 
                                 <td class="px-6 py-5">
@@ -279,12 +283,16 @@
                                             Allocated
                                         </span>
 
+                                    @elseif($donation->status == 'Pending')
+
+                                        <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-semibold">Pending</span>
+
                                     @elseif($donation->status == 'Failed')
 
-                                        <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
-                                            Failed
-                                        </span>
+                                        <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">Failed</span>
 
+                                    @else
+                                        <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">{{ $donation->status }}</span>
                                     @endif
 
                                 </td>
@@ -304,9 +312,9 @@
 
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M2.458 12C3.732 7.943 7.523 5
-                                                                                                                                                                                                                     12 5c4.478 0 8.268 2.943
-                                                                                                                                                                                                                     9.542 7-1.274 4.057-5.064 7-9.542
-                                                                                                                                                                                                                     7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                                                                                                                                                                                             12 5c4.478 0 8.268 2.943
+                                                                                                                                                                                                                                             9.542 7-1.274 4.057-5.064 7-9.542
+                                                                                                                                                                                                                                             7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
 
                                         </a>
@@ -326,6 +334,8 @@
             </div>
 
         </div>
+
+        <div class="mt-4">{{ $donations->links() }}</div>
 
         <!-- BOTTOM SECTION -->
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -347,13 +357,13 @@
                 <div class="h-80 flex items-end gap-4">
 
                     @php
-                        $maxAmount = collect($monthlyCollections)->max('amount');
+                        $maxAmount = max(1, (float) collect($monthlyCollections)->max('amount'));
                     @endphp
 
                     @foreach($monthlyCollections as $data)
 
                         @php
-                            $height = ($data['amount'] / $maxAmount) * 100;
+                            $height = $maxAmount > 0 ? (($data['amount'] / $maxAmount) * 100) : 0;
                         @endphp
 
                         <div class="flex flex-col items-center w-full">
@@ -393,52 +403,20 @@
                     Allocation by Sector
                 </h3>
 
-                <div class="space-y-6">
-
-                    <div>
-                        <div class="flex justify-between text-sm font-semibold mb-2">
-                            <span>Disaster Relief</span>
-                            <span>45%</span>
+                <div class="space-y-5">
+                    @forelse($allocationBySector as $sector)
+                        <div>
+                            <div class="mb-2 flex justify-between gap-3 text-sm font-semibold">
+                                <span>{{ $sector['sector'] }}</span>
+                                <span>{{ number_format($sector['percentage'], 1) }}% · RM {{ number_format($sector['amount'], 2) }}</span>
+                            </div>
+                            <div class="h-3 overflow-hidden rounded-full bg-gray-100">
+                                <div class="h-full rounded-full bg-red-500" style="width: {{ min(100, max(0, $sector['percentage'])) }}%"></div>
+                            </div>
                         </div>
-
-                        <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="bg-red-600 h-full w-[45%]"></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between text-sm font-semibold mb-2">
-                            <span>Education</span>
-                            <span>30%</span>
-                        </div>
-
-                        <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="bg-yellow-500 h-full w-[30%]"></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between text-sm font-semibold mb-2">
-                            <span>Medical Support</span>
-                            <span>15%</span>
-                        </div>
-
-                        <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="bg-blue-500 h-full w-[15%]"></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between text-sm font-semibold mb-2">
-                            <span>Welfare Management</span>
-                            <span>10%</span>
-                        </div>
-
-                        <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="bg-gray-400 h-full w-[10%]"></div>
-                        </div>
-                    </div>
-
+                    @empty
+                        <p class="text-sm text-gray-500">No allocated donations are recorded for your campaigns yet.</p>
+                    @endforelse
                 </div>
 
                 <a href="/donation/allocation-details"

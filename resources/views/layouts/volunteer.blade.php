@@ -33,6 +33,11 @@
 <body class="bg-gray-50 font-sans">
 
     <!-- HEADER (STANDARDIZED FOR ALL PAGES) -->
+    @if(session('error'))
+        <div class="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded mb-4">
+            {{ session('error') }}
+        </div>
+    @endif
     <header
         class="fixed top-0 left-0 w-full z-50 h-16 flex justify-between items-center px-8 bg-white border-b border-gray-100 shadow-sm">
 
@@ -85,6 +90,7 @@
         {{ request()->is('volunteer/applications*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
                         My Applications
                     </a>
+
                     <a href="{{ route('volunteer.assignments') }}" class="block px-3 py-2 rounded
    {{ request()->is('volunteer/assignments*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
 
@@ -121,7 +127,21 @@
 
         <!-- CONTENT -->
         <main class="flex-1 overflow-y-auto p-6">
+
+            @if(session('error'))
+                <div class="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded mb-4">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded mb-4">
+                    {{ session('success') }}
+                </div>
+            @endif
+
             @yield('content')
+
         </main>
 
     </div>

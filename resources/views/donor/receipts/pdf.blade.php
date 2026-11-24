@@ -63,11 +63,11 @@
         <tr>
 
             <td class="label">
-                Transaction ID
+                Donor Name
             </td>
 
             <td>
-                {{ $reference }}
+                {{ $donorName ?? 'Donor' }}
             </td>
 
         </tr>
@@ -95,6 +95,25 @@
             </td>
 
         </tr>
+
+        <tr>
+            <td class="label">Contribution Frequency</td>
+            <td>{{ ($frequency ?? 'one_time') === 'monthly' ? 'Monthly preference' : 'One-Time' }}</td>
+        </tr>
+
+        @if(!empty($receiptEmail))
+            <tr>
+                <td class="label">Receipt Email</td>
+                <td>{{ $receiptEmail }}</td>
+            </tr>
+        @endif
+
+        @if(!empty($dedication))
+            <tr>
+                <td class="label">Dedication / Note</td>
+                <td>{{ $dedication }}</td>
+            </tr>
+        @endif
 
         <tr>
 

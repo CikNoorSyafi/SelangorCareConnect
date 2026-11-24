@@ -56,40 +56,47 @@
 
             <nav class="p-4 space-y-2 text-sm">
 
-                <a href="/dashboard" class="block px-3 py-2 rounded
-                {{ request()->is('dashboard') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Dashboard
+                <a href="/dashboard"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('dashboard') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">dashboard</span>
+                    <span>Dashboard</span>
                 </a>
 
-                <a href="/campaign" class="block px-3 py-2 rounded
-                {{ request()->is('campaign') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    My Campaign
+                <a href="/campaign"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('campaign*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">campaign</span>
+                    <span>My Campaign</span>
                 </a>
 
 
-                <a href="/volunteers" class="block px-3 py-2 rounded
-                    {{ request()->is('volunteers*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Volunteer Management
+                <a href="/volunteers"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('volunteers*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">groups</span>
+                    <span>Volunteer Management</span>
                 </a>
 
-                <a href="/donation" class="block px-3 py-2 rounded
-                     {{ request()->is('donation') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Donation
+                <a href="/donation"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('donation*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">payments</span>
+                    <span>Donation</span>
                 </a>
 
                 <a href="/communication"
-                    class="block px-3 py-2 rounded
-                     {{ request()->is('communication*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Communication
-                </a>
-                <a href="/parameters" class="block px-3 py-2 rounded
-                     {{ request()->is('parameters') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Parameters
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('communication*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">forum</span>
+                    <span>Communication</span>
                 </a>
 
-                <a href="/profile" class="block px-3 py-2 rounded 
-                     {{ request()->is('profile*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    My Profile
+                <a href="/profile"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('profile*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">person</span>
+                    <span>My Profile</span>
                 </a>
 
             </nav>
@@ -104,7 +111,9 @@
 
         <!-- CONTENT -->
         <main class="flex-1 overflow-y-auto p-6">
+
             @yield('content')
+
         </main>
 
     </div>

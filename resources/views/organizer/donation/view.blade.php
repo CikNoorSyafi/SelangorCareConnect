@@ -31,14 +31,7 @@
             <div>
                 <p class="text-sm text-gray-400">Contributor</p>
                 <h3 class="text-xl font-bold mt-1">
-                    {{ $donation['contributor'] }}
-                </h3>
-            </div>
-
-            <div>
-                <p class="text-sm text-gray-400">Transaction ID</p>
-                <h3 class="text-xl font-bold mt-1">
-                    {{ $donation['transaction_id'] }}
+                    {{ $donation->contributor ?? $donation->user?->name ?? 'Anonymous donor' }}
                 </h3>
             </div>
 

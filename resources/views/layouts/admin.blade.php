@@ -58,37 +58,51 @@
         <aside class="w-72 bg-white border-r hidden lg:flex flex-col">
 
             <nav class="p-4 space-y-2 text-sm">
-
-                <a href="/admin/dashboard" class="block px-3 py-2 rounded
-                {{ request()->is('admin/dashboard') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
+                <a href="{{ route('admin.dashboard') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">dashboard</span>
                     Dashboard
                 </a>
 
-                <a href="/admin/users" class="block px-3 py-2 rounded
-                {{ request()->is('admin/users*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Manage Users
+                <p class="px-3 pt-5 pb-1 text-[11px] uppercase tracking-wider font-bold text-gray-400">Dashboard sections</p>
+                <a href="{{ route('admin.dashboard') }}#funding"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <span class="material-symbols-outlined text-xl">monitoring</span>
+                    Fundraising
+                </a>
+                <a href="{{ route('admin.dashboard') }}#campaigns"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <span class="material-symbols-outlined text-xl">campaign</span>
+                    Campaigns
+                </a>
+                <a href="{{ route('admin.dashboard') }}#activity"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100">
+                    <span class="material-symbols-outlined text-xl">history</span>
+                    Recent activity
                 </a>
 
-                <a href="/admin/organizations" class="block px-3 py-2 rounded
-                {{ request()->is('admin/organizations*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Verify Organizations
+                <a href="{{ route('admin.parameters.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.parameters.*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">tune</span>
+                    System Parameters
                 </a>
 
-                <a href="/admin/notifications" class="block px-3 py-2 rounded
-                {{ request()->is('admin/notifications*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Send Notification
+                <p class="px-3 pt-5 pb-1 text-[11px] uppercase tracking-wider font-bold text-gray-400">Administration</p>
+                <a href="{{ route('admin.users') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.users*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">manage_accounts</span> Manage Users
                 </a>
-
-                <a href="/admin/reports" class="block px-3 py-2 rounded
-                {{ request()->is('admin/reports*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Reports
+                <a href="{{ route('admin.organizations') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.organizations*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">verified_user</span> Organization Verification
                 </a>
-
-                <a href="/admin/logs" class="block px-3 py-2 rounded
-                {{ request()->is('admin/logs*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Activity Logs
+                <a href="{{ route('admin.reports') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.reports') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">analytics</span> Reports
                 </a>
-
+                <a href="{{ route('admin.logs') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.logs') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">history</span> Activity Logs
+                </a>
+                <a href="{{ route('admin.notifications.create') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg {{ request()->routeIs('admin.notifications.*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">campaign</span> Broadcast Notification
+                </a>
             </nav>
 
             <div class="mt-auto p-4 border-t">

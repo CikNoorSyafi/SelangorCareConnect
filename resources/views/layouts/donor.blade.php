@@ -95,24 +95,62 @@
 
             <nav class="p-4 space-y-2 text-sm">
 
-                <a href="/donor/dashboard" class="block px-3 py-2 rounded
-        {{ request()->is('donor/dashboard') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Dashboard
+                <!-- DONOR DASHBOARD -->
+                <a href="/donor/dashboard"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('donor/dashboard')
+                        ? 'bg-red-50 text-red-600 font-semibold'
+                        : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">dashboard</span>
+                    <span>Dashboard</span>
                 </a>
 
-                <a href="/donor/donation" class="block px-3 py-2 rounded
-        {{ request()->is('donor/donation*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Make Donation
+                <p class="px-3 pt-5 pb-1 text-[11px] uppercase tracking-wider font-bold text-gray-400">
+                    Donation
+                </p>
+
+                <!-- CAMPAIGN FUND -->
+                <a href="/donor/donation"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('donor/donation*')
+                        ? 'bg-red-50 text-red-600 font-semibold'
+                        : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">campaign</span>
+                    <span>Campaign Fund</span>
                 </a>
 
-                <a href="/donor/history" class="block px-3 py-2 rounded
-        {{ request()->is('donor/history*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    Donation History
+                <!-- GENERAL FUND -->
+                <a href="/donor/fund"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('donor/fund*')
+                        ? 'bg-red-50 text-red-600 font-semibold'
+                        : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">volunteer_activism</span>
+                    <span>General Fund</span>
                 </a>
 
-                <a href="/profile" class="block px-3 py-2 rounded
-        {{ request()->is('/profile*') ? 'bg-red-50 text-red-500 font-semibold' : 'hover:bg-red-50' }}">
-                    My Profile
+                <!-- DONATION HISTORY -->
+                <a href="/donor/history"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('donor/history*')
+                        ? 'bg-red-50 text-red-600 font-semibold'
+                        : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">receipt_long</span>
+                    <span>Donation History</span>
+                </a>
+
+                <p class="px-3 pt-5 pb-1 text-[11px] uppercase tracking-wider font-bold text-gray-400">
+                    Account
+                </p>
+
+                <!-- MY PROFILE -->
+                <a href="/profile"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                    {{ request()->is('profile*')
+                        ? 'bg-red-50 text-red-600 font-semibold'
+                        : 'text-gray-600 hover:bg-red-50 hover:text-red-600' }}">
+                    <span class="material-symbols-outlined text-xl">person</span>
+                    <span>My Profile</span>
                 </a>
 
             </nav>

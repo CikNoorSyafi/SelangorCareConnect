@@ -7,6 +7,10 @@ use App\Models\User;
 
 class Donation extends Model
 {
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
     protected $fillable = [
 
         'user_id',
@@ -20,6 +24,9 @@ class Donation extends Model
 
         'payment_method',
         'receipt_no',
+        'frequency',
+        'receipt_email',
+        'dedication',
 
         'status'
     ];

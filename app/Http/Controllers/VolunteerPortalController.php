@@ -8,13 +8,19 @@ use App\Models\VolunteerApplication;
 use App\Models\Attendance;
 use App\Models\CampaignSkill;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use App\Models\CampaignVolunteer;
+use App\Models\Notification;
+use App\Models\UserNotification;
+use App\Models\ActivityLog;
+
 
 
 class VolunteerPortalController extends Controller
 {
     public function application($id)
     {
-        $campaign = Campaign::findOrFail($id);
+        $campaign = Campaign::where('status', 'Recruiting')->findOrFail($id);
 
         $skills = CampaignSkill::where(
             'campaign_id',
@@ -37,6 +43,7 @@ class VolunteerPortalController extends Controller
                     'user_id',
                     session('user.id')
                 )
+                ->whereIn('status', ['Pending', 'Approved', 'Rejected'])
                 ->first();
 
         if ($existingApplication) {
@@ -61,56 +68,44 @@ class VolunteerPortalController extends Controller
 
     public function apply(Request $request)
     {
-        $request->validate([
-
-            'campaign_id' => 'required',
-            'shift' => 'required',
-            'skill' => 'required',
-
+        $validated = $request->validate([
+            'campaign_id' => ['required', 'integer'],
+            'shift' => ['required', 'string', 'max:255', Rule::exists('shifts', 'name')->where('status', 'Active')],
+            'skill' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:2000'],
         ]);
-        $existingApplication =
-            VolunteerApplication::where(
-                'user_id',
-                session('user.id')
-            )
-                ->where(
-                    'campaign_id',
-                    $request->campaign_id
-                )
-                ->whereNotIn(
-                    'status',
-                    ['Withdrawn']
-                )
-                ->first();
+
+        $volunteer = \App\Models\User::where('role', 'volunteer')
+            ->where('volunteer_status', 'Active')
+            ->findOrFail(session('user.id'));
+
+        $campaign = Campaign::where('status', 'Recruiting')
+            ->findOrFail($validated['campaign_id']);
+
+        $existingApplication = VolunteerApplication::where('user_id', $volunteer->id)
+            ->where('campaign_id', $campaign->id)
+            ->whereIn('status', ['Pending', 'Approved', 'Rejected'])
+            ->exists();
 
         if ($existingApplication) {
-
-            return back()
-                ->with(
-                    'error',
-                    'You have already applied for this campaign.'
-                );
+            return back()->with('error', 'You already have an application for this campaign.');
         }
 
         VolunteerApplication::create([
-
-            'user_id' => session('user.id'),
-
-            'campaign_id' => $request->campaign_id,
-
-            'shift' => $request->shift,
-
-            'skill' => $request->skill,
-
-            'notes' => $request->notes,
-
-            'status' => 'Pending'
-
+            'user_id' => $volunteer->id,
+            'campaign_id' => $campaign->id,
+            'shift' => $validated['shift'],
+            'skill' => $validated['skill'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'status' => 'Pending',
         ]);
 
-        return redirect()
-            ->route('volunteer.application.success');
+        $this->notifyOrganizer($campaign, 'New Volunteer Application', $volunteer->name . ' submitted an application for ' . $campaign->name . '.');
+        ActivityLog::record('volunteer.application_submitted', "{$volunteer->name} applied for campaign '{$campaign->name}'.");
+
+        return redirect()->route('volunteer.application.success');
     }
+
     public function applications()
     {
         $applications =
@@ -146,24 +141,84 @@ class VolunteerPortalController extends Controller
     }
     public function withdraw($id)
     {
-        $application =
-            VolunteerApplication::where(
-                'user_id',
-                session('user.id')
-            )
-                ->findOrFail($id);
+        $application = VolunteerApplication::with('campaign')
+            ->where('user_id', session('user.id'))
+            ->findOrFail($id);
 
-        $application->update([
-            'status' => 'Withdrawn'
+        if ($application->status == 'Pending') {
+
+            $application->update([
+                'status' => 'Withdrawn'
+            ]);
+
+            $message =
+                'Application withdrawn successfully.';
+        } elseif ($application->status == 'Approved') {
+
+            if (Attendance::where('campaign_id', $application->campaign_id)
+                ->where('user_id', $application->user_id)
+                ->exists()) {
+                return back()->with(
+                    'error',
+                    'This participation has attendance history and can no longer be withdrawn. Please contact the organizer.'
+                );
+            }
+
+            $application->update([
+                'status' => 'Withdrawn'
+            ]);
+
+            CampaignVolunteer::where(
+                'campaign_id',
+                $application->campaign_id
+            )
+                ->where(
+                    'volunteer_id',
+                    session('user.id')
+                )
+                ->delete();
+
+            $message =
+                'Campaign participation withdrawn successfully.';
+        } else {
+
+            return back()->with(
+                'error',
+                'This application cannot be withdrawn.'
+            );
+        }
+
+        $this->notifyOrganizer($application->campaign, 'Volunteer Application Withdrawn', 'A volunteer has withdrawn their application/participation for ' . $application->campaign->name . '.');
+        ActivityLog::record('volunteer.application_withdrawn', "Volunteer '{$application->user->name}' withdrew their application for campaign '{$application->campaign->name}'.");
+
+        return back()->with('success', $message);
+    }
+
+    private function notifyOrganizer(Campaign $campaign, string $title, string $message): void
+    {
+        $organizerId = (int) ($campaign->organizer_id ?? 0);
+        if ($organizerId <= 0) {
+            return;
+        }
+
+        $notification = Notification::create([
+            'organizer_id' => $organizerId,
+            'title' => $title,
+            'message' => $message,
+            'type' => 'System',
+            'audience' => 'Organizer',
+            'campaign_id' => $campaign->id,
+            'status' => 'Sent',
+            'recipients' => 1,
         ]);
 
-        return redirect()
-            ->back()
-            ->with(
-                'success',
-                'Application withdrawn successfully.'
-            );
+        UserNotification::create([
+            'user_id' => $organizerId,
+            'notification_id' => $notification->id,
+            'is_read' => false,
+        ]);
     }
+
     public function dashboard()
     {
 
@@ -197,7 +252,9 @@ class VolunteerPortalController extends Controller
                 )
                 ->count();
 
-        $hours = 0;
+        $hours = Attendance::where('user_id', $userId)
+            ->where('status', 'Present')
+            ->sum('hours_served');
 
         $activeApplications =
             VolunteerApplication::with(
@@ -218,13 +275,18 @@ class VolunteerPortalController extends Controller
                 'user_id',
                 $userId
             )
+                ->whereIn(
+                    'status',
+                    [
+                        'Pending',
+                        'Approved',
+                        'Rejected'
+                    ]
+                )
                 ->pluck('campaign_id');
 
         $campaigns =
-            Campaign::where(
-                'status',
-                'Approved'
-            )
+            Campaign::where('status', 'Recruiting')
                 ->whereNotIn(
                     'id',
                     $appliedCampaignIds
@@ -245,7 +307,26 @@ class VolunteerPortalController extends Controller
         );
     }
 
+    public function assignments()
+    {
+        $assignments =
+            CampaignVolunteer::with([
+                'campaign',
+                'role',
+                'shift'
+            ])
+                ->where(
+                    'volunteer_id',
+                    session('user.id')
+                )
+                ->latest()
+                ->get();
 
+        return view(
+            'volunteer.assignments',
+            compact('assignments')
+        );
+    }
     public function history()
     {
         $applications =
@@ -254,9 +335,12 @@ class VolunteerPortalController extends Controller
                     'user_id',
                     session('user.id')
                 )
-                ->where(
+                ->whereIn(
                     'status',
-                    'Approved'
+                    [
+                        'Approved',
+                        'Withdrawn'
+                    ]
                 )
                 ->latest()
                 ->get();
@@ -281,52 +365,39 @@ class VolunteerPortalController extends Controller
             compact('application')
         );
     }
-    public function assignments()
-    {
-        $assignments =
-            VolunteerApplication::with('campaign')
-                ->where(
-                    'user_id',
-                    session('user.id')
-                )
-                ->where(
-                    'status',
-                    'Approved'
-                )
-                ->latest()
-                ->get();
 
-        return view(
-            'volunteer.assignments',
-            compact('assignments')
-        );
-    }
     public function attendance()
     {
-        $attendance = [
+        $userId = session('user.id');
 
-            [
-                'campaign' => 'Flood Relief Support',
-                'date' => '12 Jun 2026',
-                'checkin' => '08:00 AM',
-                'checkout' => '12:00 PM',
-                'hours' => 4
-            ],
+        $attendanceQuery = Attendance::with('campaign')
+            ->where('user_id', $userId);
 
-            [
-                'campaign' => 'Food Aid Distribution',
-                'date' => '18 Jun 2026',
-                'checkin' => '09:00 AM',
-                'checkout' => '05:00 PM',
-                'hours' => 8
-            ]
+        $totalHours = (int) (clone $attendanceQuery)
+            ->where('status', 'Present')
+            ->sum('hours_served');
 
-        ];
+        $campaignsAttended = (clone $attendanceQuery)
+            ->where('status', 'Present')
+            ->distinct('campaign_id')
+            ->count('campaign_id');
 
-        return view(
-            'volunteer.attendance',
-            compact('attendance')
-        );
+        $recordedSessions = (clone $attendanceQuery)->count();
+        $presentSessions = (clone $attendanceQuery)
+            ->where('status', 'Present')
+            ->count();
+
+        $attendanceRate = $recordedSessions > 0
+            ? round(($presentSessions / $recordedSessions) * 100, 1)
+            : 0;
+
+        $attendance = $attendanceQuery
+            ->latest('attendance_date')
+            ->paginate(10);
+
+        return view('volunteer.attendance', compact(
+            'attendance', 'totalHours', 'campaignsAttended', 'attendanceRate'
+        ));
     }
 
     public function profile()

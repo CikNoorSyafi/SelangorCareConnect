@@ -32,6 +32,16 @@
 
         </div>
 
+        @if($errors->any())
+            <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                <ul class="list-disc pl-5">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- FORM -->
         <form action="/communication/store" method="POST" class="bg-white border rounded-3xl p-8">
 
@@ -102,7 +112,7 @@
 
                     </label>
 
-                    <select name="audience" class="w-full border rounded-2xl px-5 py-4">
+                    <select id="audience" name="audience" class="w-full border rounded-2xl px-5 py-4">
 
                         <option>All Volunteers</option>
                         <option>Campaign Volunteers</option>
@@ -122,7 +132,7 @@
 
                     </label>
 
-                    <select name="campaign_id" class="w-full border rounded-2xl px-5 py-4">
+                    <select id="campaign_id" name="campaign_id" class="w-full border rounded-2xl px-5 py-4">
 
                         <option value="">
                             No Campaign
@@ -140,11 +150,10 @@
 
                     </select>
 
+                    <p class="text-xs text-gray-500 mt-2" id="campaignHelp">
+                        Select a campaign when sending to Campaign Volunteers or Campaign Donors. Only your campaigns are listed.
+                    </p>
                 </div>
-
-            </div>
-            <div>
-
 
             </div>
 
@@ -193,6 +202,21 @@
 
         const messageBox =
             document.getElementById('messageBox');
+
+        const audienceSelect = document.getElementById('audience');
+        const campaignSelect = document.getElementById('campaign_id');
+        const campaignHelp = document.getElementById('campaignHelp');
+
+        function updateCampaignRequirement() {
+            const needsCampaign = ['Campaign Volunteers', 'Campaign Donors'].includes(audienceSelect.value);
+            campaignSelect.required = needsCampaign;
+            campaignHelp.textContent = needsCampaign
+                ? 'A campaign is required. Only campaigns owned by your Organizer account are listed.'
+                : 'Optional for All Volunteers and All Donors. Only your campaigns are listed.';
+        }
+
+        audienceSelect.addEventListener('change', updateCampaignRequirement);
+        updateCampaignRequirement();
 
         notificationType.addEventListener('change', function () {
 

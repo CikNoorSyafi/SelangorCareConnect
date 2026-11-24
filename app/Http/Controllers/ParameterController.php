@@ -1,290 +1,220 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+
+use App\Models\CampaignType;
+use App\Models\Shift;
 use App\Models\Skill;
 use App\Models\VolunteerRole;
-use App\Models\Shift;
-use App\Models\CampaignType;
-
-
+use Illuminate\Http\Request;
 
 class ParameterController extends Controller
 {
+    /**
+     * Shared master data is managed centrally by System Administrator.
+     */
     public function index()
     {
         $skills = Skill::latest()->get();
-
         $roles = VolunteerRole::latest()->get();
-
         $shifts = Shift::latest()->get();
+        $campaignTypes = CampaignType::latest()->get();
 
-        $campaignTypes =
-            CampaignType::latest()
-                ->get();
-
-        return view(
-            'organizer.parameters.index',
-            compact(
-                'skills',
-                'roles',
-                'shifts',
-                'campaignTypes'
-            )
-        );
+        return view('admin.parameters.index', compact(
+            'skills',
+            'roles',
+            'shifts',
+            'campaignTypes'
+        ));
     }
+
+    // ---------------------------------------------------------------------
+    // Skills
+    // ---------------------------------------------------------------------
 
     public function storeSkill(Request $request)
     {
-        $request->validate([
-
-            'name' => 'required|max:50',
-
-            'description' => 'nullable|max:255',
-
-            'status' => 'required'
-
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'in:Active,Inactive'],
         ]);
 
-        Skill::create([
+        Skill::create($validated);
 
-            'name' => $request->name,
-
-            'description' => $request->description,
-
-            'status' => $request->status
-
-        ]);
-
-        return redirect('/parameters')
-            ->with(
-                'success',
-                'Skill created successfully.'
-            );
-    }
-    public function updateSkill(
-        Request $request,
-        $id
-    ) {
-        $skill =
-            Skill::findOrFail($id);
-
-        $skill->update([
-
-            'name' => $request->name,
-
-            'description' => $request->description,
-
-            'status' => $request->status
-
-        ]);
-
-        return redirect('/parameters')
-            ->with(
-                'success',
-                'Skill updated successfully.'
-            );
+        return redirect('/admin/parameters#skills')
+            ->with('success', 'Skill created successfully.');
     }
 
     public function editSkill($id)
     {
         $skill = Skill::findOrFail($id);
 
-        return view(
-            'organizer.parameters.edit-skill',
-            compact('skill')
-        );
+        return view('admin.parameters.edit-skill', compact('skill'));
     }
+
+    public function updateSkill(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'in:Active,Inactive'],
+        ]);
+
+        Skill::findOrFail($id)->update($validated);
+
+        return redirect('/admin/parameters#skills')
+            ->with('success', 'Skill updated successfully.');
+    }
+
     public function deleteSkill($id)
     {
-        Skill::findOrFail($id)
-            ->delete();
+        Skill::findOrFail($id)->update(['status' => 'Inactive']);
 
-        return redirect('/parameters')
-            ->with(
-                'success',
-                'Skill deleted successfully.'
-            );
+        return redirect('/admin/parameters#skills')
+            ->with('success', 'Skill deactivated successfully. Existing campaign and volunteer records are preserved.');
     }
+
+    // ---------------------------------------------------------------------
+    // Volunteer roles
+    // ---------------------------------------------------------------------
 
     public function storeRole(Request $request)
     {
-        VolunteerRole::create([
-
-            'name' => $request->name,
-            'description' => $request->description,
-            'status' => $request->status
-
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'in:Active,Inactive'],
         ]);
 
-        return redirect('/parameters#roles')
-            ->with('success', 'Role created successfully.');
+        VolunteerRole::create($validated);
+
+        return redirect('/admin/parameters#roles')
+            ->with('success', 'Volunteer role created successfully.');
     }
+
     public function editRole($id)
     {
         $role = VolunteerRole::findOrFail($id);
 
-        return view(
-            'organizer.parameters.edit-role',
-            compact('role')
-        );
+        return view('admin.parameters.edit-role', compact('role'));
     }
 
     public function updateRole(Request $request, $id)
     {
-        $role = VolunteerRole::findOrFail($id);
-
-        $role->update([
-
-            'name' => $request->name,
-            'description' => $request->description,
-            'status' => $request->status
-
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'in:Active,Inactive'],
         ]);
 
-        return redirect('/parameters#roles')
-            ->with('success', 'Role updated successfully.');
+        VolunteerRole::findOrFail($id)->update($validated);
+
+        return redirect('/admin/parameters#roles')
+            ->with('success', 'Volunteer role updated successfully.');
     }
 
     public function deleteRole($id)
     {
-        VolunteerRole::findOrFail($id)->delete();
+        VolunteerRole::findOrFail($id)->update(['status' => 'Inactive']);
 
-        return redirect('/parameters#roles')
-            ->with('success', 'Role deleted successfully.');
+        return redirect('/admin/parameters#roles')
+            ->with('success', 'Volunteer role deactivated successfully. Existing assignments are preserved.');
     }
+
+    // ---------------------------------------------------------------------
+    // Shifts
+    // ---------------------------------------------------------------------
 
     public function storeShift(Request $request)
     {
-        Shift::create([
-
-            'name' => $request->name,
-
-            'start_time' => $request->start_time,
-
-            'end_time' => $request->end_time,
-
-            'status' => $request->status
-
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'status' => ['required', 'in:Active,Inactive'],
         ]);
 
-        return redirect('/parameters#shifts')
-            ->with(
-                'success',
-                'Shift created successfully.'
-            );
+        Shift::create($validated);
+
+        return redirect('/admin/parameters#shifts')
+            ->with('success', 'Shift created successfully.');
     }
+
     public function editShift($id)
     {
         $shift = Shift::findOrFail($id);
 
-        return view(
-            'organizer.parameters.edit-shift',
-            compact('shift')
-        );
+        return view('admin.parameters.edit-shift', compact('shift'));
     }
 
-    public function updateShift(
-        Request $request,
-        $id
-    ) {
-        $shift = Shift::findOrFail($id);
-
-        $shift->update([
-
-            'name' => $request->name,
-
-            'start_time' => $request->start_time,
-
-            'end_time' => $request->end_time,
-
-            'status' => $request->status
-
+    public function updateShift(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'status' => ['required', 'in:Active,Inactive'],
         ]);
 
-        return redirect('/parameters#shifts')
-            ->with(
-                'success',
-                'Shift updated successfully.'
-            );
+        Shift::findOrFail($id)->update($validated);
+
+        return redirect('/admin/parameters#shifts')
+            ->with('success', 'Shift updated successfully.');
     }
 
     public function deleteShift($id)
     {
-        Shift::findOrFail($id)
-            ->delete();
+        Shift::findOrFail($id)->update(['status' => 'Inactive']);
 
-        return redirect('/parameters#shifts')
-            ->with(
-                'success',
-                'Shift deleted successfully.'
-            );
+        return redirect('/admin/parameters#shifts')
+            ->with('success', 'Shift deactivated successfully. Existing assignments are preserved.');
     }
+
+    // ---------------------------------------------------------------------
+    // Campaign types
+    // ---------------------------------------------------------------------
 
     public function storeCampaignType(Request $request)
     {
-        CampaignType::create([
-
-            'name' => $request->name,
-
-            'description' => $request->description,
-
-            'status' => $request->status
-
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'in:Active,Inactive'],
         ]);
 
-        return redirect('/parameters#campaign-types')
-            ->with(
-                'success',
-                'Campaign Type created successfully.'
-            );
+        CampaignType::create($validated);
+
+        return redirect('/admin/parameters#campaign-types')
+            ->with('success', 'Campaign type created successfully.');
     }
 
     public function editCampaignType($id)
     {
-        $campaignType =
-            CampaignType::findOrFail($id);
+        $campaignType = CampaignType::findOrFail($id);
 
-        return view(
-            'organizer.parameters.edit-campaign-type',
-            compact('campaignType')
-        );
+        return view('admin.parameters.edit-campaign-type', compact('campaignType'));
     }
 
-    public function updateCampaignType(
-        Request $request,
-        $id
-    ) {
-        $campaignType =
-            CampaignType::findOrFail($id);
-
-        $campaignType->update([
-
-            'name' => $request->name,
-
-            'description' => $request->description,
-
-            'status' => $request->status
-
+    public function updateCampaignType(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:50'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'status' => ['required', 'in:Active,Inactive'],
         ]);
 
-        return redirect('/parameters#campaign-types')
-            ->with(
-                'success',
-                'Campaign Type updated successfully.'
-            );
+        CampaignType::findOrFail($id)->update($validated);
+
+        return redirect('/admin/parameters#campaign-types')
+            ->with('success', 'Campaign type updated successfully.');
     }
 
     public function deleteCampaignType($id)
     {
-        CampaignType::findOrFail($id)
-            ->delete();
+        CampaignType::findOrFail($id)->update(['status' => 'Inactive']);
 
-        return redirect('/parameters#campaign-types')
-            ->with(
-                'success',
-                'Campaign Type deleted successfully.'
-            );
+        return redirect('/admin/parameters#campaign-types')
+            ->with('success', 'Campaign type deactivated successfully. Existing campaigns are preserved.');
     }
-
 }

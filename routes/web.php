@@ -1,28 +1,79 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\OrganizerDashboardController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\ParameterController;
 use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\ProfileController;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Controllers\VolunteerPortalController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NotificationController;
-use App\Models\Donation;
-use App\Models\Campaign;
+use App\Http\Controllers\DonorController;
 
 Route::view('/', 'welcome');
 
 Route::get('/auth', function () {
     return view('auth');
-});
+})->name('auth');
 
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+
+// Forgot Password routes
+Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])
+    ->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])
+    ->middleware('throttle:5,1')
+    ->name('password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])
+    ->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+    ->middleware('throttle:5,1')
+    ->name('password.update');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// System Administrator routes
+Route::middleware('role:administrator')->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
+    // Shared system parameters: managed by System Administrator only.
+    Route::get('/parameters', [ParameterController::class, 'index'])->name('parameters.index');
+    Route::post('/parameters/skills/store', [ParameterController::class, 'storeSkill'])->name('parameters.skills.store');
+    Route::get('/parameters/skills/edit/{id}', [ParameterController::class, 'editSkill'])->name('parameters.skills.edit');
+    Route::post('/parameters/skills/update/{id}', [ParameterController::class, 'updateSkill'])->name('parameters.skills.update');
+    Route::post('/parameters/skills/deactivate/{id}', [ParameterController::class, 'deleteSkill'])->name('parameters.skills.deactivate');
+
+    Route::post('/parameters/roles/store', [ParameterController::class, 'storeRole'])->name('parameters.roles.store');
+    Route::get('/parameters/roles/edit/{id}', [ParameterController::class, 'editRole'])->name('parameters.roles.edit');
+    Route::post('/parameters/roles/update/{id}', [ParameterController::class, 'updateRole'])->name('parameters.roles.update');
+    Route::post('/parameters/roles/deactivate/{id}', [ParameterController::class, 'deleteRole'])->name('parameters.roles.deactivate');
+
+    Route::post('/parameters/shifts/store', [ParameterController::class, 'storeShift'])->name('parameters.shifts.store');
+    Route::get('/parameters/shifts/edit/{id}', [ParameterController::class, 'editShift'])->name('parameters.shifts.edit');
+    Route::post('/parameters/shifts/update/{id}', [ParameterController::class, 'updateShift'])->name('parameters.shifts.update');
+    Route::post('/parameters/shifts/deactivate/{id}', [ParameterController::class, 'deleteShift'])->name('parameters.shifts.deactivate');
+
+    Route::post('/parameters/campaign-types/store', [ParameterController::class, 'storeCampaignType'])->name('parameters.campaign-types.store');
+    Route::get('/parameters/campaign-types/edit/{id}', [ParameterController::class, 'editCampaignType'])->name('parameters.campaign-types.edit');
+    Route::post('/parameters/campaign-types/update/{id}', [ParameterController::class, 'updateCampaignType'])->name('parameters.campaign-types.update');
+    Route::post('/parameters/campaign-types/deactivate/{id}', [ParameterController::class, 'deleteCampaignType'])->name('parameters.campaign-types.deactivate');
+
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::post('/users/update-role/{id}', [AdminController::class, 'updateUserRole'])->whereNumber('id')->name('users.update-role');
+
+    Route::get('/organizations', [AdminController::class, 'organizations'])->name('organizations');
+    Route::post('/organizations/verify/{id}', [AdminController::class, 'verifyOrganization'])->whereNumber('id')->name('organizations.verify');
+
+    Route::get('/logs', [AdminController::class, 'activityLogs'])->name('logs');
+    Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
+    Route::get('/notifications', [AdminController::class, 'broadcast'])->name('notifications.create');
+    Route::post('/notifications/send', [AdminController::class, 'sendBroadcast'])->name('notifications.send');
+});
+
 
 Route::get('/profile', [ProfileController::class, 'index']);
 Route::get('/profile/edit', [ProfileController::class, 'edit']);
@@ -32,575 +83,90 @@ Route::post('/profile/password', [ProfileController::class, 'changePassword']);
 
 //// Organizer Portal Routes
 Route::middleware('role:organizer')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('organizer.dashboard');
-    });
+    Route::get('/dashboard', [OrganizerDashboardController::class, 'index'])
+        ->name('organizer.dashboard');
     Route::get('/campaign', [CampaignController::class, 'index']);
     Route::post('/campaign/store', [CampaignController::class, 'store']);
-
-
+    Route::get('/campaign/create', [CampaignController::class, 'create']);
+    Route::get('/campaign/edit/{id}', [CampaignController::class, 'edit']);
+    Route::post('/campaign/update/{id}', [CampaignController::class, 'update']);
+    Route::post('/campaign/delete/{id}', [CampaignController::class, 'delete']);
+    Route::get('/campaign/recruiting/{id}', [CampaignController::class, 'startRecruitment']);
+    Route::get('/campaign/start/{id}', [CampaignController::class, 'startCampaign']);
+    Route::get('/campaign/complete/{id}', [CampaignController::class, 'completeCampaign']);
     Route::get(
-        '/campaign/edit/{id}',
-        [CampaignController::class, 'edit']
+        '/campaign/attendance/{id}',
+        [CampaignController::class, 'attendance']
     );
 
     Route::post(
-        '/campaign/update/{id}',
-        [CampaignController::class, 'update']
+        '/campaign/attendance/store/{id}',
+        [CampaignController::class, 'storeAttendance']
     );
-
+    Route::get('/organizer/campaigns/{campaign}/applications', [CampaignController::class, 'applications'])->name('organizer.campaigns.applications');
+    Route::post('/applications/{application}/approve', [CampaignController::class, 'approveApplication'])->name('applications.approve');
     Route::post(
-        '/campaign/delete/{id}',
-        [CampaignController::class, 'delete']
-    );
-    Route::get(
-        '/parameters',
-        [ParameterController::class, 'index']
-    );
-    Route::post('/parameters/skills/store', [ParameterController::class, 'storeSkill']);
-    Route::post('/parameters/skills/update/{id}', [ParameterController::class, 'updateSkill']);
-    Route::post('/parameters/skills/delete/{id}', [ParameterController::class, 'deleteSkill']);
-    Route::get('/parameters/skills/edit/{id}', [ParameterController::class, 'editSkill']);
-    Route::post('/parameters/roles/store', [ParameterController::class, 'storeRole']);
-    Route::get('/parameters/roles/edit/{id}', [ParameterController::class, 'editRole']);
-    Route::post('/parameters/roles/update/{id}', [ParameterController::class, 'updateRole']);
-    Route::post('/parameters/roles/delete/{id}', [ParameterController::class, 'deleteRole']);
-    Route::post('/parameters/shifts/store', [ParameterController::class, 'storeShift']);
-    Route::get('/parameters/shifts/edit/{id}', [ParameterController::class, 'editShift']);
-    Route::post('/parameters/shifts/update/{id}', [ParameterController::class, 'updateShift']);
-    Route::post('/parameters/shifts/delete/{id}', [ParameterController::class, 'deleteShift']);
-    Route::post('/parameters/campaign-types/store', [ParameterController::class, 'storeCampaignType']);
-    Route::get('/parameters/campaign-types/edit/{id}', [ParameterController::class, 'editCampaignType']);
-    Route::post('/parameters/campaign-types/update/{id}', [ParameterController::class, 'updateCampaignType']);
-    Route::post('/parameters/campaign-types/delete/{id}', [ParameterController::class, 'deleteCampaignType']);
+        '/applications/{application}/reject',
+        [CampaignController::class, 'rejectApplication']
+    )->name('applications.reject');
     Route::get('/volunteers', [VolunteerController::class, 'index']);
+    Route::get('/volunteers/create', [VolunteerController::class, 'create']);
+    Route::post('/volunteers/store', [VolunteerController::class, 'store']);
+    Route::get('/volunteers/applications', [VolunteerController::class, 'applications']);
     Route::get('/volunteers/view/{id}', [VolunteerController::class, 'view']);
-    Route::post('/volunteers/skills/store', [VolunteerController::class, 'storeSkill']);
-    Route::post('/volunteers/skills/delete/{id}', [VolunteerController::class, 'deleteSkill']);
     Route::get('/volunteers/edit/{id}', [VolunteerController::class, 'edit']);
     Route::post('/volunteers/update/{id}', [VolunteerController::class, 'update']);
+    Route::post('/volunteers/status/{id}', [VolunteerController::class, 'updateStatus']);
+    Route::post('/volunteers/delete/{id}', [VolunteerController::class, 'delete']);
+    Route::post('/volunteers/skills/store', [VolunteerController::class, 'storeSkill']);
+    Route::post('/volunteers/skills/delete/{id}', [VolunteerController::class, 'deleteSkill']);
     Route::post('/volunteers/assignment/store', [VolunteerController::class, 'storeAssignment']);
-    Route::get('/volunteers/assignment/delete/{id}', [VolunteerController::class, 'deleteAssignment']);
-    Route::get('/donation', [DonationController::class, 'index']);
-    Route::get('/donation/create', [DonationController::class, 'create']);
-    Route::post('/donation/store', [DonationController::class, 'store']);
-    Route::get('/donation/edit/{id}', [DonationController::class, 'edit']);
-    Route::post('/donation/update/{id}', [DonationController::class, 'update']);
-    Route::get('/donation/view/{id}', [DonationController::class, 'show']);
-    Route::get('/donation/delete/{id}', [DonationController::class, 'delete']);
-    Route::get('/donation/allocation-details', [DonationController::class, 'allocationDetails']);
-    Route::get('/donation/export', [DonationController::class, 'exportPdf']);
+    Route::post('/volunteers/assignment/update/{id}', [VolunteerController::class, 'updateAssignment']);
+    Route::post('/volunteers/assignment/delete/{id}', [VolunteerController::class, 'deleteAssignment']);
+    Route::get('/donation', [DonationController::class, 'index'])->name('organizer.donation.index');
+    Route::get('/donation/view/{id}', [DonationController::class, 'show'])->whereNumber('id')->name('organizer.donation.view');
+    Route::get('/donation/allocation-details', [DonationController::class, 'allocationDetails'])->name('organizer.donation.allocations');
+    Route::get('/donation/export', [DonationController::class, 'exportPdf'])->name('organizer.donation.export');
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::get('/communication', [CommunicationController::class, 'index']);
-    Route::get('/communication/create', [CommunicationController::class, 'create']);
-    Route::post('/communication/store', [CommunicationController::class, 'store']);
-    Route::get('/communication/view/{id}', [CommunicationController::class, 'show']);
-    Route::get('/communication/delete/{id}', [CommunicationController::class, 'delete']);
-    Route::get('/communication/send/{id}', [CommunicationController::class, 'send']);
+    Route::get('/communication/view/{id}', [CommunicationController::class, 'show'])
+        ->name('communication.show');
+    Route::get('/communication', [CommunicationController::class, 'index'])->name('communication.index');
+    Route::get('/communication/create', [CommunicationController::class, 'create'])->name('communication.create');
+    Route::post('/communication/store', [CommunicationController::class, 'store'])->name('communication.store');
+
 });
 
-Route::middleware('role:donor')->group(function () {
-
-    Route::get('/donor/dashboard', function () {
-
-        $campaigns = Campaign::where(
-            'status',
-            'Approved'
-        )->get()->toArray();
-
-        $history = App\Models\Donation::where(
-            'user_id',
-            session('user.id')
-        )
-            ->latest()
-            ->take(5)
-            ->get();
-
-        foreach ($campaigns as &$campaign) {
-
-            $campaign['collected'] = Donation::where(
-                'campaign_id',
-                $campaign['id']
-            )
-                ->where(
-                    'status',
-                    'Allocated'
-                )
-                ->sum('amount');
-
-            $campaign['remaining'] =
-                max(
-                    0,
-                    $campaign['target'] -
-                    $campaign['collected']
-                );
-
-            $campaign['progress'] =
-                $campaign['target'] > 0
-
-                ? round(
-                    (
-                        $campaign['collected']
-                        /
-                        $campaign['target']
-                    ) * 100,
-                    1
-                )
-
-                : 0;
-        }
-        $communityFund = App\Models\Donation::where(
-            'campaign_type',
-            'Community Fund'
-        )
-            ->where(
-                'status',
-                'Allocated'
-            )
-            ->sum('amount');
-        $campaignsSupported = App\Models\Donation::where(
-            'user_id',
-            session('user.id')
-        )
-            ->where(
-                'status',
-                'Allocated'
-            )
-            ->whereNotNull(
-                'campaign_id'
-            )
-            ->distinct()
-            ->count('campaign_id');
-
-        $totalContributed = App\Models\Donation::where(
-            'user_id',
-            session('user.id')
-        )
-            ->where(
-                'status',
-                'Allocated'
-            )
-            ->sum('amount');
-
-        return view(
-            'donor.dashboard',
-            compact(
-                'campaigns',
-                'history',
-                'communityFund',
-                'totalContributed',
-                'campaignsSupported'
-            )
-        );
-    });
-
-    Route::get('/donor/fund', function () {
-
-        return view('donor.fund.index');
-
-    });
-
-    Route::post(
-        '/donor/payment-gateway',
-        function (\Illuminate\Http\Request $request) {
-
-            $nextReference =
-                session(
-                    'transaction_counter',
-                    1000
-                ) + 1;
-
-            $method = match ($request->input('payment_method')) {
-
-                'card' => 'Credit / Debit Card',
-
-                'fpx' => 'FPX Online Banking',
-
-                'wallet' => 'E-Wallet',
-
-            };
-
-            $campaign = Campaign::where(
-                'name',
-                $request->campaign_name
-            )->first();
-
-            session([
-
-                'transaction_counter' =>
-                    $nextReference,
-
-                'payment_amount' =>
-                    $request->input('amount'),
-
-                'payment_method' =>
-                    $method,
-
-                'payment_reference' =>
-                    'SCC-' .
-                    now()->format('Ymd') .
-                    '-' .
-                    $nextReference,
-
-                'campaign_id' =>
-                    $campaign?->id,
-
-                'campaign_name' =>
-                    $campaign?->name
-                    ?? 'Community Fund',
-
-            ]);
-
-            return view(
-                'donor.payment.gateway'
-            );
-
-        }
-    );
-
-    Route::get(
-        '/donor/payment-confirmation',
-        function () {
-
-            $donation =
-                Donation::findOrFail(
-                    session('latest_donation_id')
-                );
-
-            return view(
-                'donor.payment.payment-confirmation',
-                compact('donation')
-            );
-
-        }
-    );
-
-    Route::post(
-        '/donor/payment/success',
-        function () {
-
-            $history =
-                session(
-                    'donation_history',
-                    []
-                );
-
-            $donation = Donation::create([
-
-                'user_id' =>
-                    session('user.id'),
-
-                'campaign_id' =>
-                    session('campaign_id'),
-
-                'contributor' =>
-                    session('user.name'),
-
-                'transaction_id' =>
-                    session('payment_reference'),
-
-                'campaign_type' =>
-                    session('campaign_id')
-                    ? Campaign::find(session('campaign_id'))?->type
-                    : 'Community Fund',
-
-                'status' =>
-                    'Allocated',
-
-                'amount' =>
-                    session('payment_amount'),
-
-                'payment_method' =>
-                    session('payment_method'),
-
-                'receipt_no' =>
-                    'RCP-' . now()->timestamp
-
-            ]);
-
-            $history[] = [
-
-                'reference' => session('payment_reference'),
-
-                'campaign' => session('campaign_name'),
-
-                'amount' => session('payment_amount'),
-
-                'method' => session('payment_method'),
-
-                'status' => 'SUCCESS',
-
-                'datetime' => now()->timezone(
-                    'Asia/Kuala_Lumpur'
-                )
-
-            ];
-
-            session([
-                'donation_history' => $history,
-
-                'payment_status' => 'SUCCESS',
-
-                'payment_datetime' =>
-                    now()->timezone(
-                        'Asia/Kuala_Lumpur'
-                    ),
-                'campaign' =>
-                    session('campaign_name'),
-                'latest_donation_id' => $donation->id
-            ]);
-
-            return redirect(
-                '/donor/payment-confirmation'
-            );
-
-        }
-    );
-
-    Route::post(
-        '/donor/payment/fail',
-        function () {
-
-            $donation = Donation::create([
-
-                'user_id' =>
-                    session('user.id'),
-
-                'campaign_id' =>
-                    session('campaign_id'),
-
-                'contributor' =>
-                    session('user.name'),
-
-                'transaction_id' =>
-                    session('payment_reference'),
-
-                'campaign_type' =>
-                    session('campaign_id')
-                    ? Campaign::find(session('campaign_id'))?->type
-                    : 'Community Fund',
-
-                'status' =>
-                    'Failed',
-
-                'amount' =>
-                    session('payment_amount'),
-
-                'payment_method' =>
-                    session('payment_method'),
-
-                'receipt_no' =>
-                    'RCP-' . now()->timestamp
-
-            ]);
-
-            session([
-                'latest_donation_id' =>
-                    $donation->id
-            ]);
-
-            return redirect(
-                '/donor/payment-confirmation'
-            );
-
-        }
-    );
-
-    Route::get(
-        '/donor/download-receipt/{id}',
-        function ($id) {
-
-            $donation = App\Models\Donation::findOrFail($id);
-
-            $data = [
-
-                'campaign' =>
-                    $donation->campaign_type,
-
-                'amount' =>
-                    $donation->amount,
-
-                'method' =>
-                    $donation->payment_method,
-
-                'reference' =>
-                    $donation->transaction_id,
-
-                'datetime' =>
-                    $donation->created_at->timezone('Asia/Kuala_Lumpur'),
-
-                'status' =>
-                    $donation->status
-
-            ];
-
-            $pdf = Pdf::loadView(
-                'donor.receipts.pdf',
-                $data
-            );
-
-            return $pdf->download(
-                'Receipt-' .
-                $donation->transaction_id .
-                '.pdf'
-            );
-
-        }
-    );
-
-    Route::get('/donor/donation', function () {
-
-        $campaigns = Campaign::where(
-            'status',
-            'Approved'
-        )->get();
-
-        return view(
-            'donor.donation.index',
-            compact('campaigns')
-        );
-
-    });
-
-    Route::get(
-        '/donor/history',
-        function (\Illuminate\Http\Request $request) {
-
-            $status = $request->status;
-            $search = $request->search;
-
-            $history = Donation::where(
-                'user_id',
-                session('user.id')
-            );
-
-            if (!empty($status)) {
-
-                $history->where(
-                    'status',
-                    $status
-                );
-            }
-
-            if (!empty($search)) {
-
-                $history->where(function ($query) use ($search) {
-
-                    $query->where(
-                        'transaction_id',
-                        'LIKE',
-                        "%{$search}%"
-                    )
-
-                        ->orWhere(
-                            'campaign_type',
-                            'LIKE',
-                            "%{$search}%"
-                        )
-
-                        ->orWhere(
-                            'payment_method',
-                            'LIKE',
-                            "%{$search}%"
-                        );
-
-                });
-            }
-
-            $history = $history
-                ->latest()
-                ->paginate(8)
-                ->withQueryString();
-
-            return view(
-                'donor.history.index',
-                compact(
-                    'history',
-                    'status',
-                    'search'
-                )
-            );
-
-        }
-    );
-
-    Route::get(
-        '/donor/history/view/{id}',
-        function ($id) {
-            $transaction =
-                Donation::findOrFail($id);
-
-            session([
-
-                'payment_reference' =>
-                    $transaction->transaction_id,
-
-                'payment_amount' =>
-                    $transaction->amount,
-
-                'payment_method' =>
-                    $transaction->payment_method,
-
-                'payment_status' =>
-                    $transaction->status,
-
-                'payment_datetime' =>
-                    $transaction->created_at,
-
-                'campaign_name' =>
-                    $transaction->campaign_type,
-
-            ]);
-
-            return redirect(
-                '/donor/payment-confirmation'
-            );
-
-        }
-    );
-    Route::get(
-        '/donor/notifications',
-        function () {
-
-            $notifications =
-                App\Models\UserNotification::with(
-                    'notification'
-                )
-                    ->where(
-                        'user_id',
-                        session('user.id')
-                    )
-                    ->latest()
-                    ->get();
-
-            return view(
-                'donor.notifications',
-                compact(
-                    'notifications'
-                )
-            );
-
-        }
-    );
-
-    Route::post(
-        '/donor/notifications/{id}/read',
-        function ($id) {
-
-            \App\Models\UserNotification::where(
-                'id',
-                $id
-            )->update([
-                        'is_read' => true
-                    ]);
-
-            return response()->json([
-                'success' => true
-            ]);
-        }
-    );
-
+Route::middleware('role:donor')->prefix('donor')->name('donor.')->group(function () {
+    Route::get('/dashboard', [DonorController::class, 'dashboard'])
+        ->name('dashboard');
+    Route::get('/donation', [DonorController::class, 'campaignDonation'])
+        ->name('donation');
+    Route::get('/fund', [DonorController::class, 'generalFund'])
+        ->name('fund');
+
+    Route::post('/payment/start', [DonorController::class, 'startPayment'])
+        ->name('payment.start');
+    Route::get('/payment/gateway/{id}', [DonorController::class, 'paymentGateway'])
+        ->whereNumber('id')->name('payment.gateway');
+    Route::post('/payment/success/{id}', [DonorController::class, 'paymentSuccess'])
+        ->whereNumber('id')->name('payment.success');
+    Route::post('/payment/failed/{id}', [DonorController::class, 'paymentFailed'])
+        ->whereNumber('id')->name('payment.failed');
+    Route::get('/payment/confirmation/{id}', [DonorController::class, 'paymentConfirmation'])
+        ->whereNumber('id')->name('payment.confirmation');
+
+    Route::get('/history', [DonorController::class, 'history'])
+        ->name('history');
+    Route::get('/history/{id}', [DonorController::class, 'historyDetails'])
+        ->whereNumber('id')->name('history.details');
+    Route::get('/receipt/{id}', [DonorController::class, 'downloadReceipt'])
+        ->whereNumber('id')->name('receipt');
+
+    Route::get('/notifications', [DonorController::class, 'notifications'])
+        ->name('notifications');
+    Route::post('/notifications/{id}/read', [DonorController::class, 'markNotificationRead'])
+        ->whereNumber('id')->name('notifications.read');
 });
 
 ///////////////// VOLUNTEER PORTAL ROUTES
@@ -659,13 +225,12 @@ Route::middleware('role:volunteer')->group(function () {
 
     Route::get(
         '/volunteer/notifications',
-        function () {
+        [NotificationController::class, 'volunteerIndex']
+    )->name('volunteer.notifications');
 
-            return view(
-                'volunteer.notifications'
-            );
-
-        }
-    );
+    Route::post(
+        '/volunteer/notifications/{id}/read',
+        [NotificationController::class, 'markAsRead']
+    )->name('volunteer.notifications.read');
 
 });

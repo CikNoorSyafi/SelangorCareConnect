@@ -13,7 +13,15 @@
             <p class="text-gray-500 mb-6">
                 {{ $campaign->name }}
             </p>
-
+            @if ($errors->any())
+                <div class="bg-red-100 border border-red-300 text-red-700 p-4 rounded mb-4">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <form method="POST" action="{{ route('volunteer.apply') }}">
 
                 @csrf
@@ -49,29 +57,33 @@
                     </div>
 
                 </div>
-                <div class="mt-4">
+                @if($skills->count() > 0)
 
-                    <label class="block font-semibold mb-2">
-                        Relevant Skill
-                    </label>
+                    <div class="mt-4">
 
-                    <select name="skill" class="w-full border rounded-lg p-3">
+                        <label class="block font-semibold mb-2">
+                            Relevant Skill
+                        </label>
 
-                        <option value="">
-                            Select Skill
-                        </option>
+                        <select name="skill" class="w-full border rounded-lg p-3">
 
-                        @foreach($skills as $skill)
-
-                            <option value="{{ $skill->skill->name }}">
-                                {{ $skill->skill->name }}
+                            <option value="">
+                                Select Skill
                             </option>
 
-                        @endforeach
+                            @foreach($skills as $skill)
 
-                    </select>
+                                <option value="{{ $skill->skill->name }}">
+                                    {{ $skill->skill->name }}
+                                </option>
 
-                </div>
+                            @endforeach
+
+                        </select>
+
+                    </div>
+
+                @endif
                 <div class="mb-6">
 
                     <label class="block font-semibold mb-2">

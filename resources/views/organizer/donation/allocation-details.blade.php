@@ -35,7 +35,7 @@
         <!-- ALLOCATION GROUPS -->
         <div class="space-y-8">
 
-            @foreach($allocationGroups as $type => $items)
+            @forelse($allocationGroups as $type => $items)
 
                 <div class="bg-white border rounded-3xl p-8">
 
@@ -79,19 +79,19 @@
 
                                         <td class="py-6 text-lg font-semibold text-gray-800">
 
-                                            {{ $donation['campaign'] }}
+                                            {{ $donation->campaign?->name ?? 'Campaign' }}
 
                                         </td>
 
                                         <td class="py-6 text-gray-600">
 
-                                            {{ $donation['contributor'] }}
+                                            {{ $donation->contributor ?? $donation->user?->name ?? 'Anonymous donor' }}
 
                                         </td>
 
                                         <td class="py-6 font-bold text-xl text-gray-900">
 
-                                            RM {{ number_format((float) $donation['amount'], 2) }}
+                                            RM {{ number_format((float) $donation->amount, 2) }}
 
                                         </td>
 
@@ -107,7 +107,9 @@
 
                 </div>
 
-            @endforeach
+            @empty
+                <div class="rounded-2xl border bg-white p-8 text-center text-gray-500">No allocated donations are available for your campaigns.</div>
+            @endforelse
 
         </div>
 

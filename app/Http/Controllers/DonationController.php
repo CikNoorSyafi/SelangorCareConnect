@@ -9,90 +9,93 @@ use App\Models\Campaign;
 
 class DonationController extends Controller
 {
-    // DISPLAY DONATION LIST
+    // DISPLAY DONATIONS FOR CAMPAIGNS OWNED BY THE CURRENT ORGANIZER
     public function index(Request $request)
     {
-        $donations = Donation::with(
-            'campaign',
-            'user'
-        )
-            ->latest()
-            ->get();
+        $organizerId = (int) session('user.id');
+        abort_unless($organizerId > 0, 403, 'Organizer session not found.');
 
-        if ($request->search) {
+        // Retrieve donations belonging to the logged-in Organizer's campaigns
+        $ownedDonations = Donation::query()
+            ->with(['campaign', 'user'])
+            ->whereHas('campaign', function ($query) use ($organizerId) {
+                $query->where('organizer_id', $organizerId);
+            });
 
-            $search = strtolower($request->search);
+        // Apply search filter
+        $donationQuery = clone $ownedDonations;
 
-            $donations = $donations->filter(
-                function ($d) use ($search) {
+        if ($request->filled('search')) {
 
-                    return str_contains(
-                        strtolower($d->contributor ?? ''),
-                        $search
-                    )
+            $search = $request->search;
 
-                        ||
+            $donationQuery->where(function ($query) use ($search) {
 
-                        str_contains(
-                            strtolower($d->transaction_id ?? ''),
-                            $search
-                        )
+                $query->where('contributor', 'like', "%{$search}%")
+                    ->orWhere('transaction_id', 'like', "%{$search}%")
+                    ->orWhereHas('campaign', function ($campaignQuery) use ($search) {
+                        $campaignQuery->where('name', 'like', "%{$search}%");
+                    });
 
-                        ||
-
-                        str_contains(
-                            strtolower($d->campaign->name ?? ''),
-                            $search
-                        );
-
-                }
-            );
+            });
         }
 
-        if ($request->status) {
+        // Apply donation status filter
+        if ($request->filled('status')) {
 
-            $donations = $donations->where(
-                'status',
-                $request->status
-            );
+            $donationQuery->where('status', $request->status);
+
         }
 
-        $totalCollections =
-            Donation::where(
-                'status',
-                'Allocated'
-            )->sum('amount');
+        // Page through real donation records belonging to campaigns owned by this organizer.
+        $donations = $donationQuery->latest()->paginate(20)->withQueryString();
 
-        $totalAllocated =
-            Donation::where(
-                'status',
-                'Allocated'
-            )->sum('amount');
+        $totalCollections = (float) (clone $ownedDonations)
+            ->where('status', 'Allocated')->sum('amount');
+        $totalAllocated = (clone $ownedDonations)
+            ->where('status', 'Allocated')->count();
+        $pendingVerifications = (clone $ownedDonations)
+            ->where('status', 'Pending')->count();
+        $contributors = (clone $ownedDonations)
+            ->whereNotNull('user_id')
+            ->distinct()
+            ->count('user_id');
 
-        $pendingVerifications =
-            Donation::where(
-                'status',
-                'Pending'
-            )->count();
+        $allocationBySector = (clone $ownedDonations)
+            ->where('status', 'Allocated')
+            ->get(['campaign_type', 'amount'])
+            ->groupBy(fn ($donation) => $donation->campaign_type ?: 'Unclassified')
+            ->map(fn ($items, $sector) => [
+                'sector' => $sector,
+                'amount' => (float) $items->sum('amount'),
+                'percentage' => $totalCollections > 0
+                    ? round(((float) $items->sum('amount') / $totalCollections) * 100, 1)
+                    : 0,
+            ])
+            ->sortByDesc('amount')
+            ->values();
 
-        $contributors =
-            Donation::whereNotNull(
-                'user_id'
-            )
-                ->distinct()
-                ->count('user_id');
+        // Build a stable six-month trend without database-specific MONTH() SQL.
+        $firstMonth = now()->startOfMonth()->subMonths(5);
+        $monthlyDonationRecords = (clone $ownedDonations)
+            ->where('status', 'Allocated')
+            ->where('created_at', '>=', $firstMonth)
+            ->get(['amount', 'created_at'])
+            ->groupBy(function ($donation) {
+                return $donation->created_at->format('Y-m');
+            });
 
-        $allocationGroups =
-            $donations->groupBy(
-                'campaign_type'
-            );
-        $monthlyCollections = Donation::selectRaw(
-            'MONTH(created_at) as month,
-     SUM(amount) as amount'
-        )
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $monthlyCollections = [];
+        for ($offset = 0; $offset < 6; $offset++) {
+            $month = $firstMonth->copy()->addMonths($offset);
+            $monthKey = $month->format('Y-m');
+            $monthlyCollections[] = [
+                'month' => $month->format('M'),
+                'amount' => (float) $monthlyDonationRecords
+                    ->get($monthKey, collect())
+                    ->sum('amount'),
+            ];
+        }
 
         return view(
             'organizer.donation.index',
@@ -102,57 +105,21 @@ class DonationController extends Controller
                 'totalAllocated',
                 'pendingVerifications',
                 'contributors',
-                'allocationGroups',
+                'allocationBySector',
                 'monthlyCollections'
             )
         );
     }
 
 
-    // SHOW CREATE PAGE
-    public function create()
-    {
-        $campaigns = Campaign::where(
-            'status',
-            'Approved'
-        )->get();
-
-        return view(
-            'organizer.donation.create',
-            compact('campaigns')
-        );
-    }
-    // STORE NEW DONATION
-    public function store(Request $request)
-    {
-        Donation::create([
-
-            'contributor' => $request->contributor,
-
-            'campaign_id' => $request->campaign_id,
-
-            'amount' => str_replace(',', '', $request->amount),
-
-            'status' => $request->status,
-
-            'transaction_id' => 'TXN-' . rand(10000000, 99999999),
-
-            'payment_method' => 'Manual',
-
-            'receipt_no' => 'RCP-' . rand(10000, 99999)
-
-        ]);
-
-        return redirect('/donation')
-            ->with('success', 'Donation recorded successfully.');
-    }
     // SHOW DONATION DETAILS - VIEW PAGE
     public function show($id)
     {
-        $donation = Donation::with(
-            'user',
-            'campaign'
-        )->findOrFail($id);
+        $donation = Donation::with('user', 'campaign')
+            ->whereHas('campaign', function ($query) {
+                $query->where('organizer_id', session('user.id'));
+            })
+            ->findOrFail($id);
 
         return view(
             'organizer.donation.view',
@@ -160,146 +127,26 @@ class DonationController extends Controller
         );
     }
 
-    // SHOW EDIT PAGE
-    public function edit($id)
-    {
-        $donations = collect(session('donations', []));
-
-        $defaultDonations = collect([
-
-            [
-                'id' => 1,
-                'date' => '24 Oct 2023, 14:30',
-                'contributor' => 'Ahmad Roslan bin Said',
-                'transaction_id' => 'TXN-99827361',
-                'campaign' => 'Selangor Flood Relief 2023',
-                'campaign_type' => 'Disaster Relief',
-                'amount' => '5000.00',
-                'status' => 'Allocated',
-                'color' => 'red'
-            ],
-
-            [
-                'id' => 2,
-                'date' => '24 Oct 2023, 13:15',
-                'contributor' => 'Siti Noorhaliza',
-                'transaction_id' => 'TXN-99827355',
-                'campaign' => 'Education for All: B40 Initiative',
-                'campaign_type' => 'Education',
-                'amount' => '250.00',
-                'status' => 'Pending',
-                'color' => 'yellow'
-            ],
-
-            [
-                'id' => 3,
-                'date' => '23 Oct 2023, 16:45',
-                'contributor' => 'LKL Corporate Sdn Bhd',
-                'transaction_id' => 'TXN-99827340',
-                'campaign' => 'Digital Literacy Program',
-                'campaign_type' => 'Medical Support',
-
-                'amount' => '25000.00',
-                'status' => 'Allocated',
-                'color' => 'blue'
-            ],
-
-        ]);
-
-        $donations = $defaultDonations->merge($donations);
-
-        $donation = collect($donations)->firstWhere('id', $id);
-
-        return view('organizer.donation.edit', compact('donation'));
-    }
-
-    // UPDATE DONATION
-    public function update(Request $request, $id)
-    {
-        $donations = session('donations', []);
-
-        foreach ($donations as &$donation) {
-
-            if ($donation['id'] == $id) {
-
-                $donation['contributor'] = $request->contributor;
-
-                $donation['campaign'] = $request->campaign;
-                $donation['campaign_type'] = $request->campaign_type;
-
-                $donation['amount'] = str_replace(',', '', $request->amount);
-
-                $donation['status'] = $request->status;
-
-                $donation['color'] = $request->status == 'Allocated'
-                    ? 'red'
-                    : 'yellow';
-            }
-        }
-
-        session(['donations' => $donations]);
-
-        return redirect('/donation')
-            ->with('success', 'Donation record updated successfully.');
-    }
-
-    // DELETE DONATION
-    public function delete($id)
-    {
-        $donations = session('donations', []);
-
-        $donations = collect($donations)
-            ->reject(function ($donation) use ($id) {
-
-                return $donation['id'] == $id;
-
-            })
-            ->values()
-            ->toArray();
-
-        session(['donations' => $donations]);
-
-        return redirect('/donation')
-            ->with('success', 'Donation record deleted successfully.');
-    }
-
     public function allocationDetails()
     {
-        $defaultDonations = [
+        $donations = $this->organizerDonationsQuery()
+            ->where('status', 'Allocated')
+            ->with('campaign')
+            ->latest()
+            ->get();
 
-            [
-                'campaign' => 'Selangor Flood Relief 2023',
-                'campaign_type' => 'Disaster Relief',
-                'contributor' => 'Ahmad Roslan bin Said',
-                'amount' => '5000.00',
-            ],
+        $allocationGroups = $donations->groupBy(function ($donation) {
+            return $donation->campaign?->type ?: ($donation->campaign_type ?: 'Unclassified');
+        });
 
-            [
-                'campaign' => 'Education for All: B40 Initiative',
-                'campaign_type' => 'Education',
-                'contributor' => 'Siti Noorhaliza',
-                'amount' => '250.00',
-            ],
-
-        ];
-
-        $sessionDonations = session('donations', []);
-
-        $donations = collect(array_merge(
-            $defaultDonations,
-            $sessionDonations
-        ));
-
-        $allocationGroups = $donations->groupBy('campaign_type');
-
-        return view(
-            'organizer.donation.allocation-details',
-            compact('allocationGroups')
-        );
+        return view('organizer.donation.allocation-details', compact('allocationGroups'));
     }
+
     public function exportPdf()
     {
-        $donations = Donation::all();
+        $donations = Donation::whereHas('campaign', function ($query) {
+            $query->where('organizer_id', session('user.id'));
+        })->with('campaign', 'user')->get();
 
         $pdf = PDF::loadView(
             'organizer.donation.report',
@@ -309,5 +156,26 @@ class DonationController extends Controller
         return $pdf->download(
             'Donation_Report.pdf'
         );
+    }
+
+
+    private function ownedCampaignQuery()
+    {
+        $organizerId = (int) session('user.id');
+        abort_unless($organizerId > 0, 403, 'Organizer session not found.');
+
+        return Campaign::query()->where('organizer_id', $organizerId);
+    }
+    private function organizerDonationsQuery()
+    {
+        $organizerId = (int) session('user.id');
+
+        abort_unless($organizerId > 0, 403);
+
+        return Donation::whereHas('campaign', function ($query) use ($organizerId) {
+
+            $query->where('organizer_id', $organizerId);
+
+        });
     }
 }

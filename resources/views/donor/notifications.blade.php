@@ -61,11 +61,11 @@
                                 </td>
 
                                 <td class="px-6 py-5 font-semibold">
-                                    {{ $item->notification->title }}
+                                    {{ $item->notification?->title ?? 'Notification unavailable' }}
                                 </td>
 
                                 <td class="px-6 py-5 text-gray-600">
-                                    {{ \Illuminate\Support\Str::limit($item->notification->message, 50) }}
+                                    {{ \Illuminate\Support\Str::limit($item->notification?->message ?? '', 50) }}
                                 </td>
 
                                 <td class="px-6 py-5">
@@ -90,8 +90,8 @@
 
                                     <button onclick='openNotification(
                                                         {{ $item->id }},
-                                                        @json($item->notification->title),
-                                                        @json($item->notification->message)
+                                                        @json($item->notification?->title ?? 'Notification unavailable'),
+                                                        @json($item->notification?->message ?? '')
                                                     )'
                                         class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200">
 
@@ -169,9 +169,30 @@
 
     <script>
 
-        function openNotification(id, title, message) {
-            document.getElementById('modalTitle').innerText = title;
+        async function openNotification(id, title, message) {
+            // Mark this recipient's own notification as read before showing the modal.
+            // Waiting for the response prevents a quick page reload from cancelling the update.
+            try {
+                const response = await fetch(
+                    '/donor/notifications/' + id + '/read',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
 
+                if (!response.ok) {
+                    throw new Error('Unable to update notification read status.');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+
+            document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalMessage').innerText = message;
 
             document.getElementById('notificationModal')
@@ -179,19 +200,6 @@
 
             document.getElementById('notificationModal')
                 .classList.add('flex');
-
-            fetch(
-                '/donor/notifications/' + id + '/read',
-                {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN':
-                            '{{ csrf_token() }}',
-                        'Content-Type':
-                            'application/json'
-                    }
-                }
-            );
         }
 
         function closeNotification() {

@@ -68,11 +68,6 @@
                     </h3>
 
                     <p>
-                        <strong>ID:</strong>
-                        {{ $application->id }}
-                    </p>
-
-                    <p>
                         <strong>Campaign:</strong>
                         {{ $application->campaign->name ?? 'N/A' }}
                     </p>

@@ -1,0 +1,11 @@
+Inside the existing Route::middleware('role:organizer')->group(function () { ... }) group in routes/web.php,
+find the existing route:
+
+Route::get('/communication/view/{id}', [CommunicationController::class, 'show']);
+
+Replace it with the named route below (do not add a duplicate route):
+
+Route::get('/communication/view/{id}', [CommunicationController::class, 'show'])
+    ->name('communication.show');
+
+The other existing /communication routes should remain in place.

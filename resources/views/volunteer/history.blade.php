@@ -13,7 +13,6 @@
             <thead class="bg-gray-100">
 
                 <tr>
-                    <th class="p-4 text-left">Application ID</th>
                     <th class="p-4 text-left">Campaign</th>
                     <th class="p-4 text-left">Shift</th>
                     <th class="p-4 text-left">Status</th>
@@ -27,10 +26,6 @@
                 @forelse($applications as $application)
 
                     <tr class="border-t">
-
-                        <td class="p-4">
-                            {{ $application['id'] }}
-                        </td>
 
                         <td class="p-4">
                             {{ $application['campaign'] }}
@@ -68,7 +63,7 @@
 
                     <tr>
 
-                        <td colspan="5" class="p-6 text-center text-gray-500">
+                        <td colspan="4" class="p-6 text-center text-gray-500">
 
                             No volunteer history available.
 

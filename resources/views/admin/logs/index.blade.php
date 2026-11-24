@@ -38,7 +38,19 @@
                         <td class="px-4 py-3">
                             <span class="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-600">{{ $log->action }}</span>
                         </td>
-                        <td class="px-4 py-3 text-gray-600">{{ $log->description }}</td>
+                        @php
+                            // Hide legacy record identifiers that may remain in older audit descriptions.
+                            $cleanDescription = preg_replace(
+                                [
+                                    '/\b(campaign|volunteer|application|donation|transaction|user|organizer)\s*(?:id|#|no\.?)\s*[:#-]?\s*[A-Za-z0-9_-]+/i',
+                                    '/\b(?:SCC-\d{8}-[A-Z0-9]+|RCP-[A-Z0-9]+)\b/i',
+                                ],
+                                '',
+                                (string) $log->description
+                            );
+                            $cleanDescription = trim(preg_replace('/\s{2,}/', ' ', $cleanDescription));
+                        @endphp
+                        <td class="px-4 py-3 text-gray-600">{{ $cleanDescription }}</td>
                         <td class="px-4 py-3 text-gray-400 text-xs">{{ $log->ip_address ?? '-' }}</td>
                     </tr>
                 @empty
